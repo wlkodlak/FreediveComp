@@ -8,6 +8,7 @@ namespace FreediveComp.Models
 {
     public interface IDataFolder : IDisposable
     {
+        IDataFolder GetSubfolder(string name);
         List<string> GetFiles();
         bool Exists(string filename);
         void Create(string filename, byte[] data);
@@ -19,6 +20,7 @@ namespace FreediveComp.Models
 
     public class DataFolderMemory : IDataFolder
     {
+        private readonly Dictionary<string, DataFolderMemory> subfolders = new Dictionary<string, DataFolderMemory>();
         private readonly Dictionary<string, byte[]> files = new Dictionary<string, byte[]>();
 
         public void Create(string filename, byte[] data)
@@ -54,6 +56,17 @@ namespace FreediveComp.Models
             lock (files)
             {
                 return files.Keys.ToList();
+            }
+        }
+
+        public IDataFolder GetSubfolder(string name)
+        {
+            lock (subfolders)
+            {
+                DataFolderMemory subfolder;
+                if (subfolders.TryGetValue(name, out subfolder)) return subfolder;
+                subfolders[name] = subfolder = new DataFolderMemory();
+                return subfolder;
             }
         }
 
@@ -120,6 +133,11 @@ namespace FreediveComp.Models
 
         public void Dispose()
         {
+        }
+
+        public IDataFolder GetSubfolder(string name)
+        {
+            return new DataFolderReal(Path.Combine(folder.FullName, name));
         }
     }
 }

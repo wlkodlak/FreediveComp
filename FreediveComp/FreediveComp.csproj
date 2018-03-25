@@ -82,6 +82,7 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Api\Api.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -92,6 +93,7 @@
     <Compile Include="Models\Repository.cs" />
     <Compile Include="Models\AthletesJsonRepository.cs" />
     <Compile Include="Models\MemoryRepository.cs" />
+    <Compile Include="Models\RepositorySet.cs" />
     <Compile Include="Models\StartingListJsonRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -99,7 +101,6 @@
     <Folder Include="App_Data\" />
     <Folder Include="App_Start\" />
     <Folder Include="Controllers\" />
-    <Folder Include="Dtos\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

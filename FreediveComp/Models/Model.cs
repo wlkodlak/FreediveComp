@@ -66,7 +66,7 @@ namespace FreediveComp.Models
         public string DisciplineId { get; set; }
         public string Name { get; set; }
         public DisciplineRulesId Rules { get; set; }
-        public float FinalPointsCoeficient { get; set; }
+        public float? FinalPointsCoeficient { get; set; }
     }
 
     public enum DisciplineRulesId
@@ -144,6 +144,6 @@ namespace FreediveComp.Models
     public class ResultsComponent
     {
         public string DisciplineId { get; set; }
-        public float FinalPointsCoeficient { get; set; }
+        public float? FinalPointsCoeficient { get; set; }
     }
 }
