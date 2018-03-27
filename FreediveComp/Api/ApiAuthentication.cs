@@ -18,6 +18,12 @@ namespace FreediveComp.Api
         private readonly IRepositorySetProvider repositorySetProvider;
         private readonly Random random;
 
+        public ApiAuthentication(IRepositorySetProvider repositorySetProvider)
+        {
+            this.repositorySetProvider = repositorySetProvider;
+            this.random = new Random();
+        }
+
         public AuthenticateResponse Authenticate(string raceId, AuthenticateRequest authentication)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");

@@ -113,7 +113,7 @@ namespace FreediveComp.Models
     {
         public string StartingLaneId { get; set; }
         public string ShortName { get; set; }
-        public string ParentLandId { get; set; }
+        public string ParentLaneId { get; set; }
     }
 
     public class StartingListEntry
