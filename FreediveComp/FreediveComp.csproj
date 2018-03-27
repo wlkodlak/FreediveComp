@@ -82,7 +82,12 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Api\Api.cs" />
+    <Compile Include="Api\ApiAthlete.cs" />
+    <Compile Include="Api\ApiAuthentication.cs" />
+    <Compile Include="Api\ApiMessages.cs" />
+    <Compile Include="Api\ApiReports.cs" />
+    <Compile Include="Api\ApiSetup.cs" />
+    <Compile Include="Api\ApiStartingList.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

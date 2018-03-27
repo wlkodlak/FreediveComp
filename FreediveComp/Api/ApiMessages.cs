@@ -4,20 +4,13 @@ using System.Collections.Generic;
 
 namespace FreediveComp.Api
 {
-    public interface IApiService
-    {
-        List<StartingLaneReportEntry> GetReportStartingLane(string raceId, string startingLaneId);
-        ResultsListReport GetReportDisciplineResults(string raceId, string disciplineId);
-        ResultsListReport GetReportResultsList(string raceId, string resultsListId);
-    }
-
     public class StartingLaneReportEntry
     {
         public AthleteProfile Athlete { get; set; }
-        public Discipline Discipline { get; set; }
-        public Announcement Announcement { get; set; }
-        public StartTimes Start { get; set; }
-        public ActualResult CurrentResult { get; set; }
+        public ReportDiscipline Discipline { get; set; }
+        public ReportAnnouncement Announcement { get; set; }
+        public ReportStartTimes Start { get; set; }
+        public ReportActualResult CurrentResult { get; set; }
     }
 
     public class AthleteProfile
@@ -33,13 +26,13 @@ namespace FreediveComp.Api
         public string ModeratorNotes { get; set; }
     }
 
-    public class Discipline
+    public class ReportDiscipline
     {
         public string DisciplineId { get; set; }
         public string Name { get; set; }
     }
 
-    public class Announcement
+    public class ReportAnnouncement
     {
         public TimeSpan? Duration { get; set; }
         public float? Depth { get; set; }
@@ -47,7 +40,7 @@ namespace FreediveComp.Api
         public string ModeratorNotes { get; set; }
     }
 
-    public class StartTimes
+    public class ReportStartTimes
     {
         public string StartingLaneId { get; set; }
         public string StartingLaneLongName { get; set; }
@@ -55,7 +48,7 @@ namespace FreediveComp.Api
         public DateTimeOffset OfficialTop { get; set; }
     }
 
-    public class ActualResult
+    public class ReportActualResult
     {
         public TimeSpan? Duration { get; set; }
         public float? Depth { get; set; }
@@ -86,7 +79,7 @@ namespace FreediveComp.Api
 
     public class ResultsListColumnMetadata
     {
-        public Discipline Discipline { get; set; }
+        public ReportDiscipline Discipline { get; set; }
         public string Title { get; set; }
         public bool IsSortingSource { get; set; }
     }
@@ -99,9 +92,59 @@ namespace FreediveComp.Api
 
     public class ResultsListReportEntrySubresult
     {
-        public Announcement Announcement { get; set; }
-        public StartTimes Start { get; set; }
-        public ActualResult CurrentResult { get; set; }
+        public ReportAnnouncement Announcement { get; set; }
+        public ReportStartTimes Start { get; set; }
+        public ReportActualResult CurrentResult { get; set; }
         public float? FinalPoints { get; set; }
+    }
+
+    public class RaceSetup
+    {
+        public RaceSettings Race { get; set; }
+        public List<StartingLane> StartingLanes { get; set; }
+        public List<ResultsList> ResultsLists { get; set; }
+        public List<Discipline> Disciplines { get; set; }
+    }
+
+    public class StartingLane
+    {
+        public string StartingLaneId { get; set; }
+        public string ShortName { get; set; }
+        public List<StartingLane> SubLanes { get; set; }
+    }
+
+    public class Athlete
+    {
+        public AthleteProfile Profile { get; set; }
+        public List<Announcement> Announcements { get; set; }
+        public List<ActualResult> Results { get; set; }
+    }
+
+    public class AuthenticateRequest
+    {
+        public string DeviceId { get; set; }
+        public string ConnectCode { get; set; }
+    }
+
+    public class AuthenticateResponse
+    {
+        public string DeviceId { get; set; }
+        public string ConnectCode { get; set; }
+        public string AuthenticationToken { get; set; }
+        public string JudgeId { get; set; }
+        public string JudgeName { get; set; }
+    }
+
+    public class AuthorizeRequest
+    {
+        public string ConnectCode { get; set; }
+        public string JudgeName { get; set; }
+    }
+
+    public class Judge
+    {
+        public string JudgeId { get; set; }
+        public string JudgeName { get; set; }
+        public List<string> DeviceIds { get; set; }
     }
 }

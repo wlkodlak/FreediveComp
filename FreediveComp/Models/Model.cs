@@ -27,7 +27,6 @@ namespace FreediveComp.Models
 
     public class Announcement
     {
-        public string AthleteId { get; set; }
         public string DisciplineId { get; set; }
         public TimeSpan? Duration { get; set; }
         public float? Depth { get; set; }
@@ -37,7 +36,6 @@ namespace FreediveComp.Models
 
     public class ActualResult
     {
-        public string AthleteId { get; set; }
         public string DisciplineId { get; set; }
         public TimeSpan? Duration { get; set; }
         public float? Depth { get; set; }
