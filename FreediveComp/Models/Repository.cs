@@ -48,6 +48,7 @@ namespace FreediveComp.Models
     {
         Judge AuthenticateJudge(string authenticationToken);
         JudgeDevice FindJudgeDevice(string deviceId);
+        JudgeDevice FindConnectCode(string connectCode);
         Judge FindJudge(string judgeId);
         void SaveJudgeDevice(JudgeDevice judgeDevice);
         void SaveJudge(Judge judge);

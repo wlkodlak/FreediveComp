@@ -16,6 +16,7 @@ namespace FreediveComp.Models
         private Dictionary<string, Judge> judgesById;
         private Dictionary<string, string> authenticationMap;
         private Dictionary<string, JudgeDevice> devicesById;
+        private Dictionary<string, JudgeDevice> devicesByConnectCode;
         private JsonSerializer serializer;
 
         public JudgesJsonRepository(IDataFolder dataFolder)
@@ -25,6 +26,7 @@ namespace FreediveComp.Models
             this.isLoaded = false;
             this.judgesById = new Dictionary<string, Judge>();
             this.devicesById = new Dictionary<string, JudgeDevice>();
+            this.devicesByConnectCode = new Dictionary<string, JudgeDevice>();
             this.authenticationMap = new Dictionary<string, string>();
             this.serializer = JsonSerializer.Create();
         }
@@ -85,6 +87,18 @@ namespace FreediveComp.Models
         private List<Judge> GetJudgesInternal()
         {
             return judgesById.Values.ToList();
+        }
+
+        public JudgeDevice FindConnectCode(string connectCode)
+        {
+            return GetData(() => FindConnectCodeInternal(connectCode));
+        }
+
+        private JudgeDevice FindConnectCodeInternal(string connectCode)
+        {
+            JudgeDevice device;
+            devicesByConnectCode.TryGetValue(connectCode, out device);
+            return device;
         }
 
         private TResult GetData<TResult>(Func<TResult> reader)
@@ -197,9 +211,11 @@ namespace FreediveComp.Models
                 EnsureDataLoaded();
                 devicesById[device.DeviceId] = device;
                 authenticationMap.Clear();
+                devicesByConnectCode.Clear();
                 foreach (JudgeDevice existing in devicesById.Values)
                 {
                     authenticationMap[existing.AuthenticationToken] = existing.JudgeId;
+                    if (existing.ConnectCode != null) devicesByConnectCode[existing.ConnectCode] = existing;
                 }
                 SaveData();
             }

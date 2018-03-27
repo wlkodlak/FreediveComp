@@ -194,6 +194,7 @@ namespace FreediveComp.Models
         private Dictionary<string, Judge> judgesById = new Dictionary<string, Judge>();
         private Dictionary<string, string> authenticationMap = new Dictionary<string, string>();
         private Dictionary<string, JudgeDevice> devicesById = new Dictionary<string, JudgeDevice>();
+        private Dictionary<string, JudgeDevice> devicesByCode = new Dictionary<string, JudgeDevice>();
 
         public Judge AuthenticateJudge(string authenticationToken)
         {
@@ -204,6 +205,16 @@ namespace FreediveComp.Models
                 if (!authenticationMap.TryGetValue(authenticationToken, out judgeId)) return null;
                 judgesById.TryGetValue(judgeId, out judge);
                 return judge;
+            }
+        }
+
+        public JudgeDevice FindConnectCode(string connectCode)
+        {
+            lock (this)
+            {
+                JudgeDevice device;
+                devicesByCode.TryGetValue(connectCode, out device);
+                return device;
             }
         }
 
@@ -257,9 +268,14 @@ namespace FreediveComp.Models
             {
                 devicesById[device.DeviceId] = device;
                 authenticationMap.Clear();
+                devicesByCode.Clear();
                 foreach (JudgeDevice existing in devicesById.Values)
                 {
                     authenticationMap[existing.AuthenticationToken] = existing.JudgeId;
+                    if (existing.ConnectCode != null)
+                    {
+                        devicesByCode[existing.ConnectCode] = existing;
+                    }
                 }
             }
         }

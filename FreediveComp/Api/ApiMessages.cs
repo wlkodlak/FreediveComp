@@ -138,6 +138,7 @@ namespace FreediveComp.Api
     public class AuthorizeRequest
     {
         public string ConnectCode { get; set; }
+        public string JudgeId { get; set; }
         public string JudgeName { get; set; }
     }
 
