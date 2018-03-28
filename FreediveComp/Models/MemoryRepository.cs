@@ -5,7 +5,7 @@ namespace FreediveComp.Models
 {
     public class RaceSettingsMemoryRepository : IRaceSettingsRepository
     {
-        private RaceSettings raceSettings;
+        private RaceSettings raceSettings = new RaceSettings();
 
         public RaceSettings GetRaceSettings()
         {

@@ -63,11 +63,11 @@ namespace FreediveComp.Models
     {
         public string DisciplineId { get; set; }
         public string Name { get; set; }
-        public DisciplineRulesId Rules { get; set; }
+        public DisciplineRules Rules { get; set; }
         public float? FinalPointsCoeficient { get; set; }
     }
 
-    public enum DisciplineRulesId
+    public enum DisciplineRules
     {
         Unspecified,
         AIDA_STA,
@@ -91,7 +91,6 @@ namespace FreediveComp.Models
 
     public class RaceSettings
     {
-        public string RaceId { get; set; }
         public string Name { get; set; }
     }
 
