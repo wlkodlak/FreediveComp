@@ -4,7 +4,13 @@ using System.Collections.Generic;
 
 namespace FreediveComp.Api
 {
-    public class StartingLaneReportEntry
+    public class StartingListReport
+    {
+        public string Title { get; set; }
+        public List<StartingListReportEntry> Entries { get; set; }
+    }
+
+    public class StartingListReportEntry
     {
         public AthleteProfile Athlete { get; set; }
         public ReportDiscipline Discipline { get; set; }
@@ -72,6 +78,7 @@ namespace FreediveComp.Api
 
     public class ResultsListMetadata
     {
+        public string DisciplineId { get; set; }
         public string ResultsListId { get; set; }
         public string Title { get; set; }
         public List<ResultsListColumnMetadata> Columns { get; set; }
@@ -93,7 +100,6 @@ namespace FreediveComp.Api
     public class ResultsListReportEntrySubresult
     {
         public ReportAnnouncement Announcement { get; set; }
-        public ReportStartTimes Start { get; set; }
         public ReportActualResult CurrentResult { get; set; }
         public float? FinalPoints { get; set; }
     }
@@ -104,13 +110,6 @@ namespace FreediveComp.Api
         public List<StartingLane> StartingLanes { get; set; }
         public List<ResultsList> ResultsLists { get; set; }
         public List<Discipline> Disciplines { get; set; }
-    }
-
-    public class StartingLane
-    {
-        public string StartingLaneId { get; set; }
-        public string ShortName { get; set; }
-        public List<StartingLane> SubLanes { get; set; }
     }
 
     public class Athlete

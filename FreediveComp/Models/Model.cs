@@ -62,7 +62,8 @@ namespace FreediveComp.Models
     public class Discipline
     {
         public string DisciplineId { get; set; }
-        public string Name { get; set; }
+        public string ShortName { get; set; }
+        public string LongName { get; set; }
         public DisciplineRules Rules { get; set; }
         public float? FinalPointsCoeficient { get; set; }
     }
@@ -112,7 +113,7 @@ namespace FreediveComp.Models
     {
         public string StartingLaneId { get; set; }
         public string ShortName { get; set; }
-        public string ParentLaneId { get; set; }
+        public List<StartingLane> SubLanes { get; set; }
     }
 
     public class StartingListEntry

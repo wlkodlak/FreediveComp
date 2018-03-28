@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FreediveComp.Models;
+using System;
 
 namespace FreediveComp.Api
 {
@@ -24,6 +25,22 @@ namespace FreediveComp.Api
         public void PostAthleteResult(string raceId, string athleteId, string authenticationToken, ReportActualResult result)
         {
             throw new NotImplementedException();
+        }
+
+        public static AthleteProfile BuildProfile(Models.Athlete model)
+        {
+            return new AthleteProfile
+            {
+                AthleteId = model.AthleteId,
+                Category = model.Category,
+                Club = model.Club,
+                CountryName = model.CountryName,
+                FirstName = model.FirstName,
+                Gender = model.Gender == Gender.Unspecified ? "" : model.Gender.ToString(),
+                ModeratorNotes = model.ModeratorNotes,
+                ProfilePhotoName = model.ProfilePhotoName,
+                Surname = model.Surname,
+            };
         }
     }
 }

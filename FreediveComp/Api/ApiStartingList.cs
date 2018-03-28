@@ -14,77 +14,24 @@ namespace FreediveComp.Api
     public class ApiStartingList : IApiStartingList
     {
         private readonly IRepositorySetProvider repositorySetProvider;
+        private readonly StartingLanesFlatBuilder flattener;
 
         public ApiStartingList(IRepositorySetProvider repositorySetProvider)
         {
             this.repositorySetProvider = repositorySetProvider;
+            this.flattener = new StartingLanesFlatBuilder();
         }
 
         public List<StartingListEntry> GetStartingList(string raceId, string startingLaneId)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
 
-            var allowedStartingLanes = GetLeafStartingLanesIds(raceId, startingLaneId);
-            var startingList = repositorySetProvider.GetRepositorySet(raceId).StartingList.GetStartingList();
+            IRepositorySet repositorySet = repositorySetProvider.GetRepositorySet(raceId);
+            var rootStartingLanes = repositorySet.StartingLanes.GetStartingLanes();
+            var allowedStartingLanes = new HashSet<string>(flattener.GetLeaves(rootStartingLanes, startingLaneId).Select(l => l.StartingLaneId));
+            var startingList = repositorySet.StartingList.GetStartingList();
             var dtos = startingList.Where(e => allowedStartingLanes.Contains(e.StartingLaneId)).ToList();
             return dtos;
-        }
-
-        private HashSet<string> GetLeafStartingLanesIds(string raceId, string startingLaneId)
-        {
-            var startingLanes = repositorySetProvider.GetRepositorySet(raceId).StartingLanes.GetStartingLanes();
-            var leafIds = new HashSet<string>();
-
-            // first add topmost allowed lanes
-            if (string.IsNullOrEmpty(startingLaneId))
-            {
-                foreach (var startingLane in startingLanes)
-                {
-                    if (startingLane.ParentLaneId == null)
-                    {
-                        leafIds.Add(startingLane.StartingLaneId);
-                    }
-                }
-            }
-            else
-            {
-                foreach (var startingLane in startingLanes)
-                {
-                    if (startingLane.StartingLaneId == startingLaneId)
-                    {
-                        leafIds.Add(startingLane.StartingLaneId);
-                    }
-                }
-            }
-
-            // go though the list and find children
-            bool anythingAdded = leafIds.Count > 0;
-            while (anythingAdded)
-            {
-                var usedParents = new HashSet<string>();
-                anythingAdded = false;
-                foreach (var startingLane in startingLanes)
-                {
-                    if (leafIds.Contains(startingLane.ParentLaneId))
-                    {
-                        bool childAdded = leafIds.Add(startingLane.StartingLaneId);
-                        if (childAdded)
-                        {
-                            usedParents.Add(startingLane.ParentLaneId);
-                            anythingAdded = true;
-                        }
-                    }
-                }
-                if (anythingAdded)
-                {
-                    foreach (var parentId in usedParents)
-                    {
-                        leafIds.Remove(parentId);
-                    }
-                }
-            }
-
-            return leafIds;
         }
 
         public void SetupStartingList(string raceId, string startingLaneId, List<StartingListEntry> entries)
@@ -92,9 +39,11 @@ namespace FreediveComp.Api
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(startingLaneId)) throw new ArgumentNullException("Missing StartingLaneId");
 
-            var allowedStartingLanes = GetLeafStartingLanesIds(raceId, startingLaneId);
-            var allowedDisciplines = new HashSet<string>(repositorySetProvider.GetRepositorySet(raceId).Disciplines.GetDisciplines().Select(d => d.DisciplineId));
-            var allowedAthletes = new HashSet<string>(repositorySetProvider.GetRepositorySet(raceId).Athletes.GetAthletes().Select(a => a.AthleteId));
+            IRepositorySet repositorySet = repositorySetProvider.GetRepositorySet(raceId);
+            var rootStartingLanes = repositorySet.StartingLanes.GetStartingLanes();
+            var allowedStartingLanes = new HashSet<string>(flattener.GetLeaves(rootStartingLanes, startingLaneId).Select(l => l.StartingLaneId));
+            var allowedDisciplines = new HashSet<string>(repositorySet.Disciplines.GetDisciplines().Select(d => d.DisciplineId));
+            var allowedAthletes = new HashSet<string>(repositorySet.Athletes.GetAthletes().Select(a => a.AthleteId));
 
             foreach (var entry in entries)
             {
@@ -107,12 +56,11 @@ namespace FreediveComp.Api
                 if (!allowedDisciplines.Contains(entry.DisciplineId)) throw new ArgumentOutOfRangeException("Unknown Entry.DisciplineId " + entry.DisciplineId);
             }
 
-            IStartingListRepository startingListRepository = repositorySetProvider.GetRepositorySet(raceId).StartingList;
-            var fullList = startingListRepository.GetStartingList();
+            var fullList = repositorySet.StartingList.GetStartingList();
             fullList.RemoveAll(e => allowedStartingLanes.Contains(e.StartingLaneId));
             fullList.AddRange(entries);
             fullList.Sort(CompareStartingListEntry);
-            startingListRepository.SaveStartingList(fullList);
+            repositorySet.StartingList.SaveStartingList(fullList);
         }
 
         private int CompareStartingListEntry(StartingListEntry x, StartingListEntry y)

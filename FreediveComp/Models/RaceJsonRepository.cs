@@ -124,7 +124,19 @@ namespace FreediveComp.Models
 
         public StartingLane FindStartingLane(string startingLaneId)
         {
-            return GetData(r => r.StartingLanes.FirstOrDefault(l => l.StartingLaneId == startingLaneId));
+            return GetData(r => FindStartingLaneInternal(r.StartingLanes, startingLaneId));
+        }
+
+        private StartingLane FindStartingLaneInternal(List<StartingLane> lanes, string id)
+        {
+            if (lanes == null) return null;
+            foreach (var lane in lanes)
+            {
+                if (lane.StartingLaneId == id) return lane;
+                var found = FindStartingLaneInternal(lane.SubLanes, id);
+                if (found != null) return found;
+            }
+            return null;
         }
 
         public List<Discipline> GetDisciplines()

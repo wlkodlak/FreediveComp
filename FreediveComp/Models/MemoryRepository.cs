@@ -53,12 +53,20 @@ namespace FreediveComp.Models
         {
             lock (this)
             {
-                foreach (StartingLane lane in data)
-                {
-                    if (lane.StartingLaneId == startingLaneId) return lane;
-                }
-                return null;
+                return FindStartingLaneInternal(data, startingLaneId);
             }
+        }
+
+        private StartingLane FindStartingLaneInternal(List<StartingLane> lanes, string id)
+        {
+            if (lanes == null) return null;
+            foreach (var lane in lanes)
+            {
+                if (lane.StartingLaneId == id) return lane;
+                var found = FindStartingLaneInternal(lane.SubLanes, id);
+                if (found != null) return found;
+            }
+            return null;
         }
 
         public List<StartingLane> GetStartingLanes()
