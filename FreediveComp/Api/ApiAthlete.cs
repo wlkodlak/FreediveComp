@@ -7,9 +7,9 @@ namespace FreediveComp.Api
 {
     public interface IApiAthlete
     {
-        Athlete GetAthlete(string raceId, string athleteId);
-        void PostAthlete(string raceId, string athleteId, Athlete athlete);
-        void PostAthleteResult(string raceId, string athleteId, string authenticationToken, ActualResult result);
+        AthleteDto GetAthlete(string raceId, string athleteId);
+        void PostAthlete(string raceId, string athleteId, AthleteDto athlete);
+        void PostAthleteResult(string raceId, string athleteId, string authenticationToken, ActualResultDto result);
     }
 
     public class ApiAthlete : IApiAthlete
@@ -23,7 +23,7 @@ namespace FreediveComp.Api
             this.rulesRepository = rulesRepository;
         }
 
-        public Athlete GetAthlete(string raceId, string athleteId)
+        public AthleteDto GetAthlete(string raceId, string athleteId)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(athleteId)) throw new ArgumentNullException("Missing AthleteId");
@@ -31,15 +31,63 @@ namespace FreediveComp.Api
             var athlete = repositorySet.Athletes.FindAthlete(athleteId);
             if (athlete == null) throw new ArgumentOutOfRangeException("Unknown AthleteId " + athleteId);
 
-            return new Athlete
+            return new AthleteDto
             {
                 Profile = BuildProfile(athlete),
-                Announcements = athlete.Announcements,
-                Results = athlete.ActualResults
+                Announcements = athlete.Announcements.Select(BuildAnnouncement).ToList(),
+                Results = athlete.ActualResults.Select(BuildActualResult).ToList()
             };
         }
 
-        public void PostAthlete(string raceId, string athleteId, Athlete incomingAthlete)
+        private static AnnouncementDto BuildAnnouncement(Announcement model)
+        {
+            return new AnnouncementDto
+            {
+                DisciplineId = model.DisciplineId,
+                ModeratorNotes = model.ModeratorNotes,
+                Performance = BuildPerformance(model.Performance),
+            };
+        }
+
+        private static PerformanceDto BuildPerformance(Performance performance)
+        {
+            return new PerformanceDto
+            {
+                Depth = performance.Depth,
+                Distance = performance.Distance,
+                Duration = performance.Duration,
+                Points = performance.Points,
+            };
+        }
+
+        private static ActualResultDto BuildActualResult(ActualResult result)
+        {
+            return new ActualResultDto
+            {
+                DisciplineId = result.DisciplineId,
+                CardResult = result.CardResult.ToString(),
+                FinalPerformance = BuildPerformance(result.FinalPerformance),
+                Performance = BuildPerformance(result.Performance),
+                JudgeComment = result.JudgeComment,
+                JudgeId = result.JudgeId,
+                Penalizations = result.Penalizations.Select(BuildPenalization).ToList(),
+            };
+        }
+
+        private static PenalizationDto BuildPenalization(Penalization penalization)
+        {
+            return new PenalizationDto
+            {
+                PenalizationId = penalization.PenalizationId,
+                Reason = penalization.Reason,
+                ShortReason = penalization.ShortReason,
+                IsShortPerformance = penalization.IsShortPerformance,
+                RuleInput = penalization.RuleInput,
+                Performance = BuildPerformance(penalization.Performance),
+            };
+        }
+
+        public void PostAthlete(string raceId, string athleteId, AthleteDto incomingAthlete)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(athleteId)) throw new ArgumentNullException("Missing AthleteId");
@@ -96,14 +144,25 @@ namespace FreediveComp.Api
                         throw new ArgumentNullException("Missing Announcement.Distance for " + disciplineId);
 
                     announcementModel.ModeratorNotes = incomingAnnouncement.ModeratorNotes;
-                    announcementModel.Performance = incomingAnnouncement.Performance;
+                    announcementModel.Performance = ExtractPerformance(incomingAnnouncement.Performance);
                 }
             }
 
             repositorySet.Athletes.SaveAthlete(athleteModel);
         }
 
-        public void PostAthleteResult(string raceId, string athleteId, string authenticationToken, ActualResult incomingResult)
+        private static Performance ExtractPerformance(PerformanceDto performance)
+        {
+            return new Performance
+            {
+                Depth = performance.Depth,
+                Distance = performance.Distance,
+                Duration = performance.Duration,
+                Points = performance.Points,
+            };
+        }
+
+        public void PostAthleteResult(string raceId, string athleteId, string authenticationToken, ActualResultDto incomingResult)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(athleteId)) throw new ArgumentNullException("Missing AthleteId");
@@ -119,22 +178,23 @@ namespace FreediveComp.Api
             if (discipline == null) throw new ArgumentOutOfRangeException("Wrong DisciplineId " + incomingResult.DisciplineId);
             var rules = rulesRepository.Get(discipline.Rules);
 
-            ActualResult finalResult;
+            ActualResult finalResult = new ActualResult();
+            finalResult.DisciplineId = discipline.DisciplineId;
+            finalResult.JudgeId = judge.JudgeId;
+            finalResult.Penalizations = new List<Penalization>();
+            finalResult.CardResult = CardResult.Parse(incomingResult.CardResult);
+
             if (incomingResult.JudgeOverride)
             {
-                finalResult = incomingResult;
-                finalResult.JudgeId = judge.JudgeId;
+                finalResult.Performance = ExtractPerformance(incomingResult.Performance);
+                finalResult.FinalPerformance = ExtractPerformance(incomingResult.FinalPerformance);
+                finalResult.JudgeComment = incomingResult.JudgeComment;
             }
             else
             {
                 var announcement = athlete.Announcements.FirstOrDefault(a => a.DisciplineId == incomingResult.DisciplineId);
                 if (announcement == null) throw new ArgumentOutOfRangeException("No announcement for " + incomingResult.DisciplineId);
 
-                finalResult = new ActualResult();
-                finalResult.DisciplineId = discipline.DisciplineId;
-                finalResult.JudgeId = judge.JudgeId;
-                finalResult.Penalizations = new List<Penalization>();
-                finalResult.CardResult = incomingResult.CardResult;
 
                 foreach (var incomingPenalization in incomingResult.Penalizations)
                 {
@@ -143,10 +203,10 @@ namespace FreediveComp.Api
                     if (incomingPenalization.PenalizationId == null)        // custom penalization
                     {
                         VerifyResult(rules.HasDepth, false, incomingPenalization.Performance.Depth, "Penalization.Depth");
-                        VerifyResult(rules.HasDuration, false, incomingPenalization.Performance.DurationSeconds, "Penalization.Duration");
+                        VerifyResult(rules.HasDuration, false, incomingPenalization.Performance.DurationSeconds(), "Penalization.Duration");
                         VerifyResult(rules.HasDistance, false, incomingPenalization.Performance.Distance, "Penalization.Distance");
                         VerifyResult(rules.CanConvertToPoints, false, incomingPenalization.Performance.Points, "Penalization.Points");
-                        finalResult.Penalizations.Add(incomingPenalization);
+                        finalResult.Penalizations.Add(ExtractPenalization(incomingPenalization));
                     }
                     else
                     {
@@ -155,7 +215,7 @@ namespace FreediveComp.Api
                         var finalPenalization = rulesPenalization.BuildPenalization(incomingPenalization.RuleInput ?? 0, finalResult);
                         if (finalPenalization != null)
                         {
-                            finalResult.Penalizations.Add(incomingPenalization);
+                            finalResult.Penalizations.Add(finalPenalization);
                             finalResult.CardResult = CombineCards(finalResult.CardResult, rulesPenalization.CardResult);
                         }
                     }
@@ -163,9 +223,9 @@ namespace FreediveComp.Api
 
                 bool didFinish = finalResult.CardResult == CardResult.White || finalResult.CardResult == CardResult.Yellow;
                 VerifyResult(rules.HasDepth, rules.HasDepth && didFinish, incomingResult.Performance.Depth, "Performance.Depth");
-                VerifyResult(rules.HasDuration, rules.HasDuration && didFinish, incomingResult.Performance.DurationSeconds, "Performance.Duration");
+                VerifyResult(rules.HasDuration, rules.HasDuration && didFinish, incomingResult.Performance.DurationSeconds(), "Performance.Duration");
                 VerifyResult(rules.HasDistance, rules.HasDistance && didFinish, incomingResult.Performance.Distance, "Performance.Distance");
-                finalResult.Performance = incomingResult.Performance;
+                finalResult.Performance = ExtractPerformance(incomingResult.Performance);
                 if (!rules.CanConvertToPoints) finalResult.Performance.Points = null;
                 else finalResult.Performance.Points = rules.GetPoints(incomingResult.Performance);
 
@@ -184,6 +244,19 @@ namespace FreediveComp.Api
             }
 
             athlete.ActualResults.Add(finalResult);
+        }
+
+        private static Penalization ExtractPenalization(PenalizationDto dto)
+        {
+            return new Penalization
+            {
+                IsShortPerformance = dto.IsShortPerformance,
+                PenalizationId = dto.PenalizationId,
+                Performance = ExtractPerformance(dto.Performance),
+                Reason = dto.Reason,
+                RuleInput = dto.RuleInput,
+                ShortReason = dto.ShortReason,
+            };
         }
 
         private static void VerifyResult(bool allowsComponent, bool requiresComponent, double? value, string name)

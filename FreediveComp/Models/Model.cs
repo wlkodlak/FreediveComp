@@ -91,7 +91,7 @@ namespace FreediveComp.Models
         public string ModeratorNotes { get; set; }
     }
 
-    public class Performance
+    public class Performance : IPerformance
     {
         public TimeSpan? Duration { get; set; }
         public double? Depth { get; set; }
@@ -113,7 +113,6 @@ namespace FreediveComp.Models
         public CardResult CardResult { get; set; }
         public string JudgeId { get; set; }
         public string JudgeComment { get; set; }
-        public bool JudgeOverride { get; set; }
     }
 
     public class Penalization
@@ -126,13 +125,85 @@ namespace FreediveComp.Models
         public double? RuleInput { get; set; }
     }
 
-    public enum CardResult
+    public struct CardResult
     {
-        None,
-        DidNotStart,
-        White,
-        Yellow,
-        Red
+        public static readonly CardResult None = new CardResult();
+        public static readonly CardResult White = new CardResult(1);
+        public static readonly CardResult DidNotStart = new CardResult(2);
+        public static readonly CardResult Yellow = new CardResult(3);
+        public static readonly CardResult Red = new CardResult(4);
+
+        private readonly int data;
+
+        private CardResult(int data)
+        {
+            this.data = data;
+        }
+
+        public override string ToString()
+        {
+            switch (data)
+            {
+                case 1: return "White";
+                case 2: return "DidNotStart";
+                case 3: return "Yellow";
+                case 4: return "Red";
+                default: return "";
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            return data;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is CardResult oth)
+            {
+                return data == oth.data;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static CardResult Parse(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return None;
+            switch (input)
+            {
+                case "White": return White;
+                case "DidNotStart": return DidNotStart;
+                case "Yellow": return Yellow;
+                case "Red": return Red;
+                default: return None;
+            }
+        }
+
+        public static bool operator ==(CardResult a, CardResult b)
+        {
+            return a.data == b.data;
+        }
+
+        public static bool operator !=(CardResult a, CardResult b)
+        {
+            return a.data != b.data;
+        }
+    }
+
+    public class CardResultJsonConverter : JsonConverter<CardResult>
+    {
+        public override CardResult ReadJson(JsonReader reader, Type objectType, CardResult existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            return CardResult.Parse((string)reader.Value);
+        }
+
+        public override void WriteJson(JsonWriter writer, CardResult value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString());
+        }
     }
 
     public class Discipline

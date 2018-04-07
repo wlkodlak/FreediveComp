@@ -1,5 +1,4 @@
-﻿using FreediveComp.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace FreediveComp.Api
@@ -40,8 +39,16 @@ namespace FreediveComp.Api
 
     public class ReportAnnouncement
     {
-        public Performance Performance { get; set; }
+        public PerformanceDto Performance { get; set; }
         public string ModeratorNotes { get; set; }
+    }
+
+    public class PerformanceDto : Models.IPerformance
+    {
+        public TimeSpan? Duration { get; set; }
+        public double? Depth { get; set; }
+        public double? Distance { get; set; }
+        public double? Points { get; set; }
     }
 
     public class ReportStartTimes
@@ -54,14 +61,25 @@ namespace FreediveComp.Api
 
     public class ReportActualResult
     {
-        public Performance Performance { get; set; }
-        public List<Penalization> Penalizations { get; set; }
-        public Performance FinalPerformance { get; set; }
-        public CardResult CardResult { get; set; }
+        public PerformanceDto Performance { get; set; }
+        public List<PenalizationDto> Penalizations { get; set; }
+        public PerformanceDto FinalPerformance { get; set; }
+        public string CardResult { get; set; }
         public string JudgeId { get; set; }
         public string JudgeName { get; set; }
         public string JudgeComment { get; set; }
     }
+
+    public class PenalizationDto
+    {
+        public string Reason { get; set; }
+        public string ShortReason { get; set; }
+        public string PenalizationId { get; set; }
+        public bool IsShortPerformance { get; set; }
+        public PerformanceDto Performance { get; set; }
+        public double? RuleInput { get; set; }
+    }
+
 
     public class ResultsListReport
     {
@@ -90,39 +108,100 @@ namespace FreediveComp.Api
         public List<ResultsListReportEntrySubresult> Subresults { get; set; }
     }
 
-    public class ResultsListReportEntrySubresult : ICombinedResult
+    public class ResultsListReportEntrySubresult : Models.ICombinedResult
     {
         public ReportAnnouncement Announcement { get; set; }
         public ReportActualResult CurrentResult { get; set; }
         public double? FinalPoints { get; set; }
 
-        Performance ICombinedResult.Announcement => Announcement?.Performance;
-        Performance ICombinedResult.Realized => CurrentResult?.Performance;
-        Performance ICombinedResult.Final => CurrentResult?.FinalPerformance;
+        Models.IPerformance Models.ICombinedResult.Announcement => Announcement?.Performance;
+        Models.IPerformance Models.ICombinedResult.Realized => CurrentResult?.Performance;
+        Models.IPerformance Models.ICombinedResult.Final => CurrentResult?.FinalPerformance;
     }
 
-    public class RaceSetup
+    public class RaceSetupDto
     {
-        public RaceSettings Race { get; set; }
-        public List<StartingLane> StartingLanes { get; set; }
-        public List<ResultsList> ResultsLists { get; set; }
-        public List<Discipline> Disciplines { get; set; }
+        public RaceSettingsDto Race { get; set; }
+        public List<StartingLaneDto> StartingLanes { get; set; }
+        public List<ResultsListDto> ResultsLists { get; set; }
+        public List<DisciplineDto> Disciplines { get; set; }
     }
 
-    public class Athlete
+    public class RaceSettingsDto
+    {
+        public string Name { get; set; }
+    }
+
+    public class StartingLaneDto
+    {
+        public string StartingLaneId { get; set; }
+        public string ShortName { get; set; }
+        public List<StartingLaneDto> SubLanes { get; set; }
+    }
+
+    public class ResultsListDto
+    {
+        public string ResultsListId { get; set; }
+        public string Title { get; set; }
+        public List<ResultsColumnDto> Columns { get; set; }
+    }
+
+    public class ResultsColumnDto
+    {
+        public string Title { get; set; }
+        public bool IsFinal { get; set; }
+        public List<ResultsComponentDto> Components { get; set; }
+    }
+
+    public class ResultsComponentDto
+    {
+        public string DisciplineId { get; set; }
+        public double? FinalPointsCoeficient { get; set; }
+    }
+
+
+    public class DisciplineDto
+    {
+        public string DisciplineId { get; set; }
+        public string ShortName { get; set; }
+        public string LongName { get; set; }
+        public string Rules { get; set; }
+        public bool AnnouncementsClosed { get; set; }
+    }
+
+    public class AthleteDto
     {
         public AthleteProfile Profile { get; set; }
-        public List<Announcement> Announcements { get; set; }
-        public List<ActualResult> Results { get; set; }
+        public List<AnnouncementDto> Announcements { get; set; }
+        public List<ActualResultDto> Results { get; set; }
     }
 
-    public class AuthenticateRequest
+    public class AnnouncementDto
+    {
+        public string DisciplineId { get; set; }
+        public PerformanceDto Performance { get; set; }
+        public string ModeratorNotes { get; set; }
+    }
+
+    public class ActualResultDto
+    {
+        public string DisciplineId { get; set; }
+        public PerformanceDto Performance { get; set; }
+        public List<PenalizationDto> Penalizations { get; set; }
+        public PerformanceDto FinalPerformance { get; set; }
+        public string CardResult { get; set; }
+        public string JudgeId { get; set; }
+        public string JudgeComment { get; set; }
+        public bool JudgeOverride { get; set; }
+    }
+
+    public class AuthenticateRequestDto
     {
         public string DeviceId { get; set; }
         public string ConnectCode { get; set; }
     }
 
-    public class AuthenticateResponse
+    public class AuthenticateResponseDto
     {
         public string DeviceId { get; set; }
         public string ConnectCode { get; set; }
@@ -131,14 +210,14 @@ namespace FreediveComp.Api
         public string JudgeName { get; set; }
     }
 
-    public class AuthorizeRequest
+    public class AuthorizeRequestDto
     {
         public string ConnectCode { get; set; }
         public string JudgeId { get; set; }
         public string JudgeName { get; set; }
     }
 
-    public class Judge
+    public class JudgeDto
     {
         public string JudgeId { get; set; }
         public string JudgeName { get; set; }

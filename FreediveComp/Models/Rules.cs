@@ -61,9 +61,9 @@ namespace FreediveComp.Models
         bool HasDistance { get; }
         bool HasDepth { get; }
         bool CanConvertToPoints { get; }
-        double GetPoints(Performance result);
+        double GetPoints(IPerformance result);
         IEnumerable<IRulesPenalization> Penalizations { get; }
-        Penalization BuildShortPenalization(Performance announcement, Performance realized);
+        Penalization BuildShortPenalization(IPerformance announcement, IPerformance realized);
         IComparer<ICombinedResult> ResultsComparer { get; }
     }
 
@@ -79,19 +79,35 @@ namespace FreediveComp.Models
         Penalization BuildPenalization(double input, ActualResult result);
     }
 
+    public interface IPerformance
+    {
+        TimeSpan? Duration { get; }
+        double? Depth { get; }
+        double? Distance { get; }
+        double? Points { get; }
+    }
+
+    public static class PerformanceExtension
+    {
+        public static double? DurationSeconds(this IPerformance performance)
+        {
+            return performance.Duration == null ? (double?)null : performance.Duration.Value.TotalSeconds;
+        }
+    }
+
     public interface ICombinedResult
     {
-        Performance Announcement { get; }
-        Performance Realized { get; }
-        Performance Final { get; }
+        IPerformance Announcement { get; }
+        IPerformance Realized { get; }
+        IPerformance Final { get; }
     }
 
     public class CombinedResultFinalResultComparer<T> : IComparer<ICombinedResult> where T : struct
     {
-        private readonly Func<Performance, T?> extractor;
+        private readonly Func<IPerformance, T?> extractor;
         private readonly IComparer<T> comparer;
 
-        public CombinedResultFinalResultComparer(Func<Performance, T?> extractor, IComparer<T> comparer)
+        public CombinedResultFinalResultComparer(Func<IPerformance, T?> extractor, IComparer<T> comparer)
         {
             this.extractor = extractor;
             this.comparer = comparer;
@@ -107,10 +123,10 @@ namespace FreediveComp.Models
 
     public class CombinedResultAnnouncementDifferenceComparer<T> : IComparer<ICombinedResult> where T : struct
     {
-        private readonly Func<Performance, T?> extractor;
+        private readonly Func<IPerformance, T?> extractor;
         private readonly Func<T, T, double> differenceCalculator;
 
-        public CombinedResultAnnouncementDifferenceComparer(Func<Performance, T?> extractor, Func<T, T, double> differenceCalculator)
+        public CombinedResultAnnouncementDifferenceComparer(Func<IPerformance, T?> extractor, Func<T, T, double> differenceCalculator)
         {
             this.extractor = extractor;
             this.differenceCalculator = differenceCalculator;
@@ -192,7 +208,7 @@ namespace FreediveComp.Models
     {
         public delegate void CalculationDelegate(double announcement, double realized, Performance penalty);
 
-        public static Penalization Build(Performance announced, Performance realized, Func<Performance, double?> extractor, CalculationDelegate calculation)
+        public static Penalization Build(IPerformance announced, IPerformance realized, Func<IPerformance, double?> extractor, CalculationDelegate calculation)
         {
             double announcedValue = extractor(announced) ?? 0;
             double realizedValue = extractor(realized) ?? 0;
@@ -236,14 +252,14 @@ namespace FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalPoints)
             .Ascending(CombinedResultsComparers.DiffDuration);
 
-        public Penalization BuildShortPenalization(Performance announcement, Performance result)
+        public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
-            return ShortPenalizationCalculator.Build(announcement, result, p => p.DurationSeconds, (a, r, p) => p.Points = Math.Ceiling(0.2 * (a - r)));
+            return ShortPenalizationCalculator.Build(announcement, result, p => p.DurationSeconds(), (a, r, p) => p.Points = Math.Ceiling(0.2 * (a - r)));
         }
 
-        public double GetPoints(Performance result)
+        public double GetPoints(IPerformance result)
         {
-            return 0.2 * result.DurationSeconds ?? 0;
+            return 0.2 * result.DurationSeconds() ?? 0;
         }
     }
 
@@ -276,12 +292,12 @@ namespace FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalPoints)
             .Ascending(CombinedResultsComparers.DiffDistance);
 
-        public Penalization BuildShortPenalization(Performance announcement, Performance result)
+        public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
             return ShortPenalizationCalculator.Build(announcement, result, p => p.Distance, (a, r, p) => p.Points = (a - r) * 0.5);
         }
 
-        public double GetPoints(Performance result)
+        public double GetPoints(IPerformance result)
         {
             return 0.5 * result.Distance ?? 0;
         }
@@ -316,12 +332,12 @@ namespace FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalPoints)
             .Ascending(CombinedResultsComparers.DiffDepth);
 
-        public Penalization BuildShortPenalization(Performance announcement, Performance result)
+        public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
             return ShortPenalizationCalculator.Build(announcement, result, p => p.Depth, (a, r, p) => p.Points = a - r);
         }
 
-        public double GetPoints(Performance result)
+        public double GetPoints(IPerformance result)
         {
             return result.Depth ?? 0;
         }
@@ -432,12 +448,12 @@ namespace FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalDuration)
             .Ascending(CombinedResultsComparers.DiffDuration);
 
-        public Penalization BuildShortPenalization(Performance announcement, Performance result)
+        public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
-            return ShortPenalizationCalculator.Build(announcement, result, p => p.DurationSeconds, (a, r, p) => p.DurationSeconds = a - r);
+            return ShortPenalizationCalculator.Build(announcement, result, p => p.DurationSeconds(), (a, r, p) => p.DurationSeconds = a - r);
         }
 
-        public double GetPoints(Performance result)
+        public double GetPoints(IPerformance result)
         {
             throw new NotSupportedException();
         }
@@ -466,12 +482,12 @@ namespace FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalDistance)
             .Ascending(CombinedResultsComparers.DiffDistance);
 
-        public Penalization BuildShortPenalization(Performance announcement, Performance result)
+        public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
             return ShortPenalizationCalculator.Build(announcement, result, p => p.Distance, (a, r, p) => p.Distance = a - r + 5);
         }
 
-        public double GetPoints(Performance result)
+        public double GetPoints(IPerformance result)
         {
             throw new NotSupportedException();
         }
@@ -502,12 +518,12 @@ namespace FreediveComp.Models
             .Ascending(CombinedResultsComparers.DiffDepth)
             .Ascending(CombinedResultsComparers.DiffDuration);
 
-        public Penalization BuildShortPenalization(Performance announcement, Performance result)
+        public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
             return ShortPenalizationCalculator.Build(announcement, result, p => p.Depth, (a, r, p) => p.Depth = a - r + 5);
         }
 
-        public double GetPoints(Performance result)
+        public double GetPoints(IPerformance result)
         {
             throw new NotSupportedException();
         }
@@ -538,12 +554,12 @@ namespace FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalDistance)
             .Ascending(CombinedResultsComparers.DiffDistance);
 
-        public Penalization BuildShortPenalization(Performance announcement, Performance result)
+        public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
             return ShortPenalizationCalculator.Build(announcement, result, p => p.Distance, (a, r, p) => p.Distance = a - r + 5);
         }
 
-        public double GetPoints(Performance result)
+        public double GetPoints(IPerformance result)
         {
             throw new NotSupportedException();
         }
@@ -632,12 +648,12 @@ namespace FreediveComp.Models
 
         public IComparer<ICombinedResult> ResultsComparer => new CombinedResultCompositeComparer();
 
-        public Penalization BuildShortPenalization(Performance announcement, Performance realized)
+        public Penalization BuildShortPenalization(IPerformance announcement, IPerformance realized)
         {
             return null;
         }
 
-        public double GetPoints(Performance result)
+        public double GetPoints(IPerformance result)
         {
             throw new NotSupportedException();
         }

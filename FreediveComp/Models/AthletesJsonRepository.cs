@@ -24,6 +24,7 @@ namespace FreediveComp.Models
             this.individualAthletes = new Dictionary<string, Athlete>();
             this.serializer = JsonSerializer.Create();
             this.serializer.Converters.Add(new SexJsonConverter());
+            this.serializer.Converters.Add(new CardResultJsonConverter());
         }
 
         public void Dispose()

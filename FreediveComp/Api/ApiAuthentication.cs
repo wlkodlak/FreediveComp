@@ -8,9 +8,9 @@ namespace FreediveComp.Api
 {
     public interface IApiAuthentication
     {
-        Judge Authorize(string raceId, AuthorizeRequest authorization);
-        AuthenticateResponse Authenticate(string raceId, AuthenticateRequest authentication);
-        List<Judge> GetJudges(string raceId);
+        JudgeDto Authorize(string raceId, AuthorizeRequestDto authorization);
+        AuthenticateResponseDto Authenticate(string raceId, AuthenticateRequestDto authentication);
+        List<JudgeDto> GetJudges(string raceId);
     }
 
     public class ApiAuthentication : IApiAuthentication
@@ -24,7 +24,7 @@ namespace FreediveComp.Api
             this.random = new Random();
         }
 
-        public AuthenticateResponse Authenticate(string raceId, AuthenticateRequest authentication)
+        public AuthenticateResponseDto Authenticate(string raceId, AuthenticateRequestDto authentication)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(authentication.DeviceId)) throw new ArgumentNullException("Missing DeviceId");
@@ -32,7 +32,7 @@ namespace FreediveComp.Api
             var judgesRepository = repositorySetProvider.GetRepositorySet(raceId).Judges;
             var judgeDevice = judgesRepository.FindJudgeDevice(authentication.DeviceId);
 
-            var response = new AuthenticateResponse();
+            var response = new AuthenticateResponseDto();
             response.DeviceId = authentication.DeviceId;
 
             if (string.IsNullOrEmpty(authentication.ConnectCode) || judgeDevice == null || !string.Equals(judgeDevice.ConnectCode, authentication.ConnectCode))
@@ -75,7 +75,7 @@ namespace FreediveComp.Api
             return random.Next(100000, 999999).ToString();
         }
 
-        public Judge Authorize(string raceId, AuthorizeRequest authorization)
+        public JudgeDto Authorize(string raceId, AuthorizeRequestDto authorization)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(authorization.ConnectCode)) throw new ArgumentNullException("Missing ConnectCode");
@@ -98,7 +98,7 @@ namespace FreediveComp.Api
             judgesDevice.AuthenticationToken = GenerateAuthenticationToken();
             judgesRepository.SaveJudgeDevice(judgesDevice);
 
-            Judge judgeDto = new Judge();
+            JudgeDto judgeDto = new JudgeDto();
             judgeDto.JudgeId = judge.JudgeId;
             judgeDto.JudgeName = judge.Name;
             judgeDto.DeviceIds = new List<string>();
@@ -114,15 +114,15 @@ namespace FreediveComp.Api
             return Guid.NewGuid().ToString();
         }
 
-        public List<Judge> GetJudges(string raceId)
+        public List<JudgeDto> GetJudges(string raceId)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
 
             var judgesRepository = repositorySetProvider.GetRepositorySet(raceId).Judges;
-            var judges = new List<Judge>();
+            var judges = new List<JudgeDto>();
             foreach (var judge in judgesRepository.GetJudges())
             {
-                var dto = new Judge();
+                var dto = new JudgeDto();
                 dto.JudgeId = judge.JudgeId;
                 dto.JudgeName = judge.Name;
                 dto.DeviceIds = new List<string>();

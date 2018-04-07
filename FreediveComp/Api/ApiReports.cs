@@ -44,10 +44,10 @@ namespace FreediveComp.Api
 
             foreach (var startingListEntry in startingList)
             {
-                Models.Athlete athlete;
+                Athlete athlete;
                 Discipline discipline;
                 StartingLaneFlat startingLane;
-                Models.Judge judge = null;
+                Judge judge = null;
                 if (!athletes.TryGetValue(startingListEntry.AthleteId, out athlete)) continue;      // athlete not found, give up
                 if (!disciplines.TryGetValue(startingListEntry.DisciplineId, out discipline)) continue;     // discipline does not exist, give up
                 if (!allowedStartingLanes.TryGetValue(startingListEntry.StartingLaneId, out startingLane)) continue;        // not showing this lane, skip
@@ -208,23 +208,23 @@ namespace FreediveComp.Api
             if (announcement == null) return null;
             return new ReportAnnouncement
             {
-                Performance = announcement.Performance,
+                Performance = BuildPerformance(announcement.Performance),
                 ModeratorNotes = announcement.ModeratorNotes
             };
         }
 
-        private static ReportActualResult BuildReportActualResult(ActualResult latestResult, Models.Judge judge)
+        private static ReportActualResult BuildReportActualResult(ActualResult latestResult, Judge judge)
         {
             if (latestResult == null) return null;
             return new ReportActualResult
             {
-                CardResult = latestResult.CardResult,
+                CardResult = latestResult.CardResult.ToString(),
                 JudgeId = judge != null ? judge.JudgeId : latestResult.JudgeId,
                 JudgeName = judge != null ? judge.Name : "",
                 JudgeComment = latestResult.JudgeComment,
-                Performance = latestResult.Performance,
-                FinalPerformance = latestResult.FinalPerformance,
-                Penalizations = latestResult.Penalizations,
+                Performance = BuildPerformance(latestResult.Performance),
+                FinalPerformance = BuildPerformance(latestResult.FinalPerformance),
+                Penalizations = latestResult.Penalizations.Select(BuildPenalization).ToList(),
             };
         }
 
@@ -245,6 +245,30 @@ namespace FreediveComp.Api
                 WarmUpTime = startingListEntry.WarmUpTime,
                 StartingLaneId = startingLane.StartingLaneId,
                 StartingLaneLongName = startingLane.FullName
+            };
+        }
+
+        private static PerformanceDto BuildPerformance(Performance performance)
+        {
+            return new PerformanceDto
+            {
+                Depth = performance.Depth,
+                Distance = performance.Distance,
+                Duration = performance.Duration,
+                Points = performance.Points,
+            };
+        }
+
+        private static PenalizationDto BuildPenalization(Penalization penalization)
+        {
+            return new PenalizationDto
+            {
+                PenalizationId = penalization.PenalizationId,
+                Reason = penalization.Reason,
+                ShortReason = penalization.ShortReason,
+                IsShortPerformance = penalization.IsShortPerformance,
+                RuleInput = penalization.RuleInput,
+                Performance = BuildPerformance(penalization.Performance),
             };
         }
 
@@ -318,7 +342,7 @@ namespace FreediveComp.Api
                 isSingleDiscipline = coeficient == 1.0f && this.components.Count == 1;
             }
 
-            public bool IsParticipating(Models.Athlete athlete)
+            public bool IsParticipating(Athlete athlete)
             {
                 foreach (var component in components)
                 {
@@ -350,7 +374,7 @@ namespace FreediveComp.Api
                 };
             }
 
-            private ResultsListReportEntrySubresult BuildCompositeSubresult(Models.Athlete athlete)
+            private ResultsListReportEntrySubresult BuildCompositeSubresult(Athlete athlete)
             {
                 bool anyResult = false;
                 double finalPoints = 0f;
@@ -379,7 +403,7 @@ namespace FreediveComp.Api
                 {
                     CurrentResult = new ReportActualResult
                     {
-                        FinalPerformance = combinedResult
+                        FinalPerformance = BuildPerformance(combinedResult)
                     },
                     FinalPoints = finalPoints
                 };
