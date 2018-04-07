@@ -40,9 +40,7 @@ namespace FreediveComp.Api
 
     public class ReportAnnouncement
     {
-        public TimeSpan? Duration { get; set; }
-        public float? Depth { get; set; }
-        public float? Distance { get; set; }
+        public Performance Performance { get; set; }
         public string ModeratorNotes { get; set; }
     }
 
@@ -56,14 +54,9 @@ namespace FreediveComp.Api
 
     public class ReportActualResult
     {
-        public TimeSpan? Duration { get; set; }
-        public float? Depth { get; set; }
-        public float? Distance { get; set; }
-        public float? Points { get; set; }
-        public TimeSpan? DurationPenalty { get; set; }
-        public float? DepthPenalty { get; set; }
-        public float? DistancePenalty { get; set; }
-        public float? PointsPenalty { get; set; }
+        public Performance Performance { get; set; }
+        public List<Penalization> Penalizations { get; set; }
+        public Performance FinalPerformance { get; set; }
         public CardResult CardResult { get; set; }
         public string JudgeId { get; set; }
         public string JudgeName { get; set; }
@@ -97,11 +90,15 @@ namespace FreediveComp.Api
         public List<ResultsListReportEntrySubresult> Subresults { get; set; }
     }
 
-    public class ResultsListReportEntrySubresult
+    public class ResultsListReportEntrySubresult : ICombinedResult
     {
         public ReportAnnouncement Announcement { get; set; }
         public ReportActualResult CurrentResult { get; set; }
-        public float? FinalPoints { get; set; }
+        public double? FinalPoints { get; set; }
+
+        Performance ICombinedResult.Announcement => Announcement?.Performance;
+        Performance ICombinedResult.Realized => CurrentResult?.Performance;
+        Performance ICombinedResult.Final => CurrentResult?.FinalPerformance;
     }
 
     public class RaceSetup

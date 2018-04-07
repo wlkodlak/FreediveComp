@@ -14,10 +14,12 @@ namespace FreediveComp.Api
     public class ApiSetup : IApiSetup
     {
         private readonly IRepositorySetProvider repositorySetProvider;
+        private readonly IRulesRepository rulesProvider;
 
-        public ApiSetup(IRepositorySetProvider repositorySetProvider)
+        public ApiSetup(IRepositorySetProvider repositorySetProvider, IRulesRepository rulesProvider)
         {
             this.repositorySetProvider = repositorySetProvider;
+            this.rulesProvider = rulesProvider;
         }
 
         public RaceSetup GetSetup(string raceId)
@@ -45,9 +47,10 @@ namespace FreediveComp.Api
 
             VerifyRaceSettings(raceSetup.Race);
             HashSet<string> disciplineIds = new HashSet<string>();
+            HashSet<string> rulesNames = rulesProvider.GetNames();
             foreach (var discipline in raceSetup.Disciplines)
             {
-                VerifyDiscipline(discipline, disciplineIds);
+                VerifyDiscipline(discipline, disciplineIds, rulesNames);
             }
             HashSet<string> startingLaneIds = new HashSet<string>();
             foreach (var startingLane in raceSetup.StartingLanes)
@@ -75,11 +78,12 @@ namespace FreediveComp.Api
             if (string.IsNullOrEmpty(race.Name)) throw new ArgumentNullException("Missing race name");
         }
 
-        private void VerifyDiscipline(Discipline discipline, HashSet<string> disciplineIds)
+        private void VerifyDiscipline(Discipline discipline, HashSet<string> disciplineIds, HashSet<string> rulesNames)
         {
             if (string.IsNullOrEmpty(discipline.DisciplineId)) throw new ArgumentNullException("Missing DisciplineId");
             if (string.IsNullOrEmpty(discipline.LongName)) throw new ArgumentNullException("Missing Discipline.Name");
-            if (discipline.Rules == DisciplineRules.Unspecified) throw new ArgumentNullException("Missing Discipline.Rules");
+            if (string.IsNullOrEmpty(discipline.Rules)) throw new ArgumentNullException("Missing Discipline.Rules");
+            if (!rulesNames.Contains(discipline.Rules)) throw new ArgumentOutOfRangeException("Unknown Discipline.Rules " + discipline.Rules);
             if (!disciplineIds.Add(discipline.DisciplineId)) throw new ArgumentOutOfRangeException("Duplicate DisciplineId " + discipline.DisciplineId);
         }
 

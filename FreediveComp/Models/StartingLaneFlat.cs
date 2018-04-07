@@ -10,7 +10,13 @@ namespace FreediveComp.Models
         public string FullName { get; set; }
     }
 
-    public class StartingLanesFlatBuilder
+    public interface IStartingLanesFlatBuilder
+    {
+        List<StartingLaneFlat> GetLeaves(List<StartingLane> rootLanes, string parentStartingLane);
+        StartingLaneFlat GetParent(List<StartingLane> rootLanes, string parentStartingLane);
+    }
+
+    public class StartingLanesFlatBuilder : IStartingLanesFlatBuilder
     {
         public StartingLaneFlat GetParent(List<StartingLane> rootLanes, string parentStartingLane)
         {

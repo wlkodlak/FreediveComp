@@ -15,7 +15,15 @@ namespace FreediveComp.Api
     public class ApiReports : IApiReports
     {
         private readonly IRepositorySetProvider repositorySetProvider;
-        private readonly StartingLanesFlatBuilder flattener;
+        private readonly IStartingLanesFlatBuilder flattener;
+        private readonly IRulesRepository rulesProvider;
+
+        public ApiReports(IRepositorySetProvider repositorySetProvider, IStartingLanesFlatBuilder flattener, IRulesRepository rulesProvider)
+        {
+            this.repositorySetProvider = repositorySetProvider;
+            this.flattener = flattener;
+            this.rulesProvider = rulesProvider;
+        }
 
         public StartingListReport GetReportStartingList(string raceId, string startingLaneId)
         {
@@ -65,14 +73,14 @@ namespace FreediveComp.Api
             return report;
         }
 
-        private int CompareStartingListEntries(StartingListReportEntry x, StartingListReportEntry y)
+        private static int CompareStartingListEntries(StartingListReportEntry x, StartingListReportEntry y)
         {
             int startTimeComparison = DateTimeOffset.Compare(x.Start.OfficialTop, y.Start.OfficialTop);
             if (startTimeComparison != 0) return startTimeComparison;
             return string.Compare(x.Start.StartingLaneLongName, y.Start.StartingLaneLongName);
         }
 
-        private string BuildStartingListTitle(StartingLaneFlat titleSource)
+        private static string BuildStartingListTitle(StartingLaneFlat titleSource)
         {
             return titleSource == null ? "" : titleSource.FullName;
         }
@@ -86,13 +94,13 @@ namespace FreediveComp.Api
             var discipline = repositorySet.Disciplines.FindDiscipline(disciplineId);
             if (discipline == null) throw new ArgumentOutOfRangeException("Unknown DisciplineId " + disciplineId);
 
+            var rules = rulesProvider.Get(discipline.Rules);
+            if (rules == null) throw new ArgumentOutOfRangeException("Unknown DisciplineRules " + discipline.Rules);
+
             var athletes = repositorySet.Athletes.GetAthletes();
             var judges = repositorySet.Judges.GetJudges();
 
-            ResultsListReport report = new ResultsListReport();
-            report.Metadata = BuildDisciplineReportMetadata(discipline);
-            report.Results = new List<ResultsListReportEntry>();
-
+            var entries = new List<ResultsListReportEntry>();
             foreach (var athlete in athletes)
             {
                 var announcement = athlete.Announcements.FirstOrDefault(a => a.DisciplineId == disciplineId);
@@ -107,15 +115,20 @@ namespace FreediveComp.Api
                 subresult.Announcement = BuildReportAnnouncement(announcement);
                 subresult.CurrentResult = BuildReportActualResult(actualResult, judge);
                 entry.Subresults.Add(subresult);
-                report.Results.Add(entry);
+
+                entries.Add(entry);
             }
 
-            // report.Results.Sort( ... );      // TODO
+            entries.Sort(new ResultsListReportEntryComparer(rules.ResultsComparer, 0));
 
-            return report;
+            return new ResultsListReport
+            {
+                Metadata = BuildDisciplineReportMetadata(discipline),
+                Results = entries
+            };
         }
 
-        private ResultsListMetadata BuildDisciplineReportMetadata(Discipline discipline)
+        private static ResultsListMetadata BuildDisciplineReportMetadata(Discipline discipline)
         {
             return new ResultsListMetadata
             {
@@ -139,42 +152,83 @@ namespace FreediveComp.Api
             if (string.IsNullOrEmpty(resultsListId)) throw new ArgumentNullException("Missing ResultsListId");
             IRepositorySet repositorySet = repositorySetProvider.GetRepositorySet(raceId);
 
-            throw new NotImplementedException();
+            var resultsList = repositorySet.ResultsLists.FindResultsList(resultsListId);
+            if (resultsList == null) throw new ArgumentOutOfRangeException("Wrong ResultsListId");
+
+            var disciplines = repositorySet.Disciplines.GetDisciplines().ToDictionary(d => d.DisciplineId);
+            var columns = new List<ResultsListColumn>();
+            var sortingIndex = -1;
+            foreach (var columnSource in resultsList.Columns)
+            {
+                ResultsListColumn column = new ResultsListColumn(columnSource.Title, columnSource.IsFinal);
+                foreach (var component in columnSource.Components)
+                {
+                    Discipline discipline;
+                    if (!disciplines.TryGetValue(component.DisciplineId, out discipline)) continue;
+                    IRules rules = rulesProvider.Get(discipline.Rules);
+                    column.AddComponent(discipline, rules, component.FinalPointsCoeficient ?? 1.0);
+                }
+                if (column.IsSortingColumn) sortingIndex = columns.Count;
+                columns.Add(column);
+            }
+
+            var athletes = repositorySet.Athletes.GetAthletes();
+            var entries = new List<ResultsListReportEntry>();
+            foreach (var athlete in athletes)
+            {
+                if (columns.Any(c => c.IsParticipating(athlete)))
+                {
+                    entries.Add(new ResultsListReportEntry
+                    {
+                        Athlete = ApiAthlete.BuildProfile(athlete),
+                        Subresults = columns.Select(c => c.BuildSubresult(athlete)).ToList()
+                    });
+                }
+            }
+
+            if (sortingIndex >= 0)
+            {
+                entries.Sort(new ResultsListReportEntryComparer(columns[sortingIndex].SortingComparer, sortingIndex));
+            }
+
+            return new ResultsListReport
+            {
+                Metadata = new ResultsListMetadata
+                {
+                    Title = resultsList.Title,
+                    ResultsListId = resultsList.ResultsListId,
+                    Columns = columns.Select(c => c.Metadata).ToList()
+                },
+                Results = entries
+            };
         }
 
-        private ReportAnnouncement BuildReportAnnouncement(Announcement announcement)
+        private static ReportAnnouncement BuildReportAnnouncement(Announcement announcement)
         {
             if (announcement == null) return null;
             return new ReportAnnouncement
             {
-                Depth = announcement.Depth,
-                Distance = announcement.Distance,
-                Duration = announcement.Duration,
+                Performance = announcement.Performance,
                 ModeratorNotes = announcement.ModeratorNotes
             };
         }
 
-        private ReportActualResult BuildReportActualResult(ActualResult latestResult, Models.Judge judge)
+        private static ReportActualResult BuildReportActualResult(ActualResult latestResult, Models.Judge judge)
         {
             if (latestResult == null) return null;
             return new ReportActualResult
             {
                 CardResult = latestResult.CardResult,
-                Depth = latestResult.Depth,
-                DepthPenalty = latestResult.DepthPenalty,
-                Distance = latestResult.Distance,
-                DistancePenalty = latestResult.DistancePenalty,
-                Duration = latestResult.Duration,
-                DurationPenalty = latestResult.DurationPenalty,
-                Points = latestResult.Points,
-                PointsPenalty = latestResult.PointsPenalty,
                 JudgeId = judge != null ? judge.JudgeId : latestResult.JudgeId,
                 JudgeName = judge != null ? judge.Name : "",
                 JudgeComment = latestResult.JudgeComment,
+                Performance = latestResult.Performance,
+                FinalPerformance = latestResult.FinalPerformance,
+                Penalizations = latestResult.Penalizations,
             };
         }
 
-        private ReportDiscipline BuildReportDiscipline(Discipline discipline)
+        private static ReportDiscipline BuildReportDiscipline(Discipline discipline)
         {
             return new ReportDiscipline
             {
@@ -183,7 +237,7 @@ namespace FreediveComp.Api
             };
         }
 
-        private ReportStartTimes BuildReportStart(StartingListEntry startingListEntry, StartingLaneFlat startingLane)
+        private static ReportStartTimes BuildReportStart(StartingListEntry startingListEntry, StartingLaneFlat startingLane)
         {
             return new ReportStartTimes
             {
@@ -193,5 +247,172 @@ namespace FreediveComp.Api
                 StartingLaneLongName = startingLane.FullName
             };
         }
+
+        private class ResultsListReportEntryComparer : IComparer<ResultsListReportEntry>
+        {
+            private readonly IComparer<ICombinedResult> comparer;
+            private readonly int sortingIndex;
+
+            public ResultsListReportEntryComparer(IComparer<ICombinedResult> comparer, int sortingIndex)
+            {
+                this.comparer = comparer;
+                this.sortingIndex = sortingIndex;
+            }
+
+            public int Compare(ResultsListReportEntry x, ResultsListReportEntry y)
+            {
+                return Compare(x.Subresults[sortingIndex], y.Subresults[sortingIndex]);
+            }
+
+            private int Compare(ResultsListReportEntrySubresult x, ResultsListReportEntrySubresult y)
+            {
+                if (comparer == null)
+                {
+                    return Comparer<double?>.Default.Compare(x.FinalPoints, y.FinalPoints);
+                }
+                else
+                {
+                    return comparer.Compare(x, y);
+                }
+            }
+        }
+
+        private class ResultsListColumn
+        {
+            private string title;
+            private bool isSortingColumn;
+            private bool isSingleDiscipline;
+            private List<ResultsListColumnComponent> components;
+
+            public ResultsListColumn(String title, bool isSortingColumn)
+            {
+                this.title = title;
+                this.isSortingColumn = isSortingColumn;
+                this.components = new List<ResultsListColumnComponent>();
+            }
+
+            public string Title => title;
+            public bool IsSortingColumn => isSortingColumn;
+            public Discipline Discipline => isSingleDiscipline ? components[0].Discipline : null;
+            public IComparer<ICombinedResult> SortingComparer => isSingleDiscipline ? components[0].Rules.ResultsComparer : null;
+
+            public ResultsListColumnMetadata Metadata
+            {
+                get
+                {
+                    return new ResultsListColumnMetadata
+                    {
+                        Title = Title,
+                        IsSortingSource = IsSortingColumn,
+                        Discipline = BuildReportDiscipline(Discipline)
+                    };
+                }
+            }
+
+            public int Index { get; internal set; }
+
+            public void AddComponent(Discipline discipline, IRules rules, double coeficient)
+            {
+                var component = new ResultsListColumnComponent(discipline, rules, coeficient);
+                this.components.Add(component);
+                isSingleDiscipline = coeficient == 1.0f && this.components.Count == 1;
+            }
+
+            public bool IsParticipating(Models.Athlete athlete)
+            {
+                foreach (var component in components)
+                {
+                    var disciplineId = component.Discipline.DisciplineId;
+                    var hasAnnouncement = athlete.Announcements.Any(a => a.DisciplineId == disciplineId);
+                    if (hasAnnouncement) return true;
+                }
+                return false;
+            }
+
+            public ResultsListReportEntrySubresult BuildSubresult(Models.Athlete athlete)
+            {
+                return isSingleDiscipline ? BuildSingleSubresult(athlete) : BuildCompositeSubresult(athlete);
+            }
+
+            private ResultsListReportEntrySubresult BuildSingleSubresult(Models.Athlete athlete)
+            {
+                var disciplineId = components[0].Discipline.DisciplineId;
+                var announcement = athlete.Announcements.FirstOrDefault(a => a.DisciplineId == disciplineId);
+                var actualResult = athlete.ActualResults.LastOrDefault(a => a.DisciplineId == disciplineId);
+
+                if (announcement == null) return null;
+
+                return new ResultsListReportEntrySubresult
+                {
+                    Announcement = BuildReportAnnouncement(announcement),
+                    CurrentResult = BuildReportActualResult(actualResult, null),
+                    FinalPoints = components[0].CalculateFinalPoints(actualResult)
+                };
+            }
+
+            private ResultsListReportEntrySubresult BuildCompositeSubresult(Models.Athlete athlete)
+            {
+                bool anyResult = false;
+                double finalPoints = 0f;
+                Performance combinedResult = new Performance();
+
+                foreach (var component in components)
+                {
+                    var disciplineId = component.Discipline.DisciplineId;
+                    var announcement = athlete.Announcements.FirstOrDefault(a => a.DisciplineId == disciplineId);
+                    if (announcement == null) continue;
+                    var actualResult = athlete.ActualResults.LastOrDefault(a => a.DisciplineId == disciplineId);
+                    if (actualResult == null) continue;
+
+                    finalPoints += component.CalculateFinalPoints(actualResult) ?? 0.0;
+
+                    if (actualResult.FinalPerformance != null)
+                    {
+                        combinedResult.Depth = Sum(combinedResult.Depth, actualResult.FinalPerformance.Depth);
+                        combinedResult.Distance = Sum(combinedResult.Distance, actualResult.FinalPerformance.Distance);
+                        combinedResult.DurationSeconds = Sum(combinedResult.DurationSeconds, actualResult.FinalPerformance.DurationSeconds);
+                        combinedResult.Points = Sum(combinedResult.Points, actualResult.FinalPerformance.Points);
+                    }
+                }
+                if (!anyResult) return null;
+                return new ResultsListReportEntrySubresult
+                {
+                    CurrentResult = new ReportActualResult
+                    {
+                        FinalPerformance = combinedResult
+                    },
+                    FinalPoints = finalPoints
+                };
+            }
+
+            private static double? Sum(double? a, double? b)
+            {
+                if (a == null) return b;
+                if (b == null) return a;
+                return a.Value + b.Value;
+            }
+
+        }
+
+        private class ResultsListColumnComponent
+        {
+            public readonly Discipline Discipline;
+            public readonly IRules Rules;
+            public readonly double Coeficient;
+
+            public ResultsListColumnComponent(Discipline discipline, IRules rules, double coeficient)
+            {
+                Discipline = discipline;
+                Coeficient = coeficient;
+                Rules = rules;
+            }
+
+            public double? CalculateFinalPoints(ActualResult result)
+            {
+                if (result == null || result.FinalPerformance == null) return null;
+                return result.FinalPerformance.Points * Coeficient;
+            }
+        }
+
     }
 }

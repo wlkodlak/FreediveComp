@@ -28,26 +28,42 @@ namespace FreediveComp.Models
     public class Announcement
     {
         public string DisciplineId { get; set; }
-        public TimeSpan? Duration { get; set; }
-        public float? Depth { get; set; }
-        public float? Distance { get; set; }
+        public Performance Performance { get; set; }
         public string ModeratorNotes { get; set; }
+    }
+
+    public class Performance
+    {
+        public TimeSpan? Duration { get; set; }
+        public double? Depth { get; set; }
+        public double? Distance { get; set; }
+        public double? Points { get; set; }
+        public double? DurationSeconds
+        {
+            get { return Duration == null ? (double?)null : Duration.Value.TotalSeconds; }
+            set { Duration = value == null ? (TimeSpan?)null : TimeSpan.FromSeconds(value.Value); }
+        }
     }
 
     public class ActualResult
     {
         public string DisciplineId { get; set; }
-        public TimeSpan? Duration { get; set; }
-        public float? Depth { get; set; }
-        public float? Distance { get; set; }
-        public float? Points { get; set; }
-        public TimeSpan? DurationPenalty { get; set; }
-        public float? DepthPenalty { get; set; }
-        public float? DistancePenalty { get; set; }
-        public float? PointsPenalty { get; set; }
+        public Performance Performance { get; set; }
+        public List<Penalization> Penalizations { get; set; }
         public CardResult CardResult { get; set; }
         public string JudgeId { get; set; }
         public string JudgeComment { get; set; }
+        public Performance FinalPerformance { get; set; }
+    }
+
+    public class Penalization
+    {
+        public string Reason { get; set; }
+        public string ShortReason { get; set; }
+        public string PenalizationId { get; set; }
+        public bool IsShortPerformance { get; set; }
+        public Performance Performance { get; set; }
+        public double? RuleInput { get; set; }
     }
 
     public enum CardResult
@@ -64,30 +80,7 @@ namespace FreediveComp.Models
         public string DisciplineId { get; set; }
         public string ShortName { get; set; }
         public string LongName { get; set; }
-        public DisciplineRules Rules { get; set; }
-        public float? FinalPointsCoeficient { get; set; }
-    }
-
-    public enum DisciplineRules
-    {
-        Unspecified,
-        AIDA_STA,
-        AIDA_DYN,
-        AIDA_DNF,
-        AIDA_CWT,
-        AIDA_CNF,
-        AIDA_FIM,
-        CMAS_STA,
-        CMAS_DYN,
-        CMAS_DYN_BI,
-        CMAS_SPEED,
-        CMAS_DNF,
-        CMAS_CWT,
-        CMAS_CWT_BI,
-        CMAS_CNF,
-        CMAS_FIM,
-        CMAS_VWT,
-        CMAS_JUMP_BLUE
+        public string Rules { get; set; }
     }
 
     public class RaceSettings
@@ -142,6 +135,6 @@ namespace FreediveComp.Models
     public class ResultsComponent
     {
         public string DisciplineId { get; set; }
-        public float? FinalPointsCoeficient { get; set; }
+        public double? FinalPointsCoeficient { get; set; }
     }
 }
