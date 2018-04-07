@@ -109,10 +109,11 @@ namespace FreediveComp.Models
         public string DisciplineId { get; set; }
         public Performance Performance { get; set; }
         public List<Penalization> Penalizations { get; set; }
+        public Performance FinalPerformance { get; set; }
         public CardResult CardResult { get; set; }
         public string JudgeId { get; set; }
         public string JudgeComment { get; set; }
-        public Performance FinalPerformance { get; set; }
+        public bool JudgeOverride { get; set; }
     }
 
     public class Penalization

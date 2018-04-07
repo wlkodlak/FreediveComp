@@ -76,7 +76,7 @@ namespace FreediveComp.Models
         string InputName { get; }
         string InputUnit { get; }
         CardResult CardResult { get; }
-        Penalization BuildPenalization(float input, ActualResult result);
+        Penalization BuildPenalization(double input, ActualResult result);
     }
 
     public interface ICombinedResult
@@ -329,8 +329,8 @@ namespace FreediveComp.Models
 
     public class AidaPenalization : IRulesPenalization
     {
-        public static AidaPenalization EarlyStart = new AidaPenalization("EarlyStart", "Early start", "Start", "Time", "s", i => (float)Math.Ceiling(i * 0.2f));
-        public static AidaPenalization LateStart = new AidaPenalization("LateStart", "Late start", "Late", "Time", "s", i => (float)Math.Ceiling(i * 0.2f));
+        public static AidaPenalization EarlyStart = new AidaPenalization("EarlyStart", "Early start", "Start", "Time", "s", i => Math.Ceiling(i * 0.2f));
+        public static AidaPenalization LateStart = new AidaPenalization("LateStart", "Late start", "Late", "Time", "s", i => Math.Ceiling(i * 0.2f));
         public static AidaPenalization NoWall = new AidaPenalization("NoWall", "Wrong turn <1m", "Turn", "Count", "x", i => 5 * i);
         public static AidaPenalization ExitHelp = new AidaPenalization("ExitHelp", "Push/pull on exit", "Exit", 5);
         public static AidaPenalization NoTag = new AidaPenalization("NoTag", "No tag delivered", "Tag", 1);
@@ -344,10 +344,10 @@ namespace FreediveComp.Models
         public static AidaPenalization WrongTurn = new AidaPenalization("WrongTurn", "Wrong turn >1m", "Turn", CardResult.Red);
 
         private string id, reason, shortReason, inputName, inputUnit;
-        private Func<float, float> calculator;
+        private Func<double, double> calculator;
         private CardResult cardResult;
 
-        public AidaPenalization(string id, string reason, string shortReason, float fixedPoints)
+        public AidaPenalization(string id, string reason, string shortReason, double fixedPoints)
         {
             this.id = id;
             this.reason = reason;
@@ -369,7 +369,7 @@ namespace FreediveComp.Models
             this.cardResult = cardResult;
         }
 
-        public AidaPenalization(string id, string reason, string shortReason, string inputName, string inputUnit, Func<float, float> calculator)
+        public AidaPenalization(string id, string reason, string shortReason, string inputName, string inputUnit, Func<double, double> calculator)
         {
             this.id = id;
             this.reason = reason;
@@ -394,14 +394,14 @@ namespace FreediveComp.Models
 
         public CardResult CardResult => cardResult;
 
-        public Penalization BuildPenalization(float input, ActualResult result)
+        public Penalization BuildPenalization(double input, ActualResult result)
         {
             return new Penalization
             {
                 PenalizationId = id,
                 Reason = reason,
                 ShortReason = shortReason,
-                RuleInput = inputName == null ? null : (float?)input,
+                RuleInput = inputName == null ? null : (double?)input,
                 Performance = new Performance
                 {
                     Points = calculator(input)
@@ -563,7 +563,7 @@ namespace FreediveComp.Models
 
         private readonly string id, reason, shortReason, inputName, inputUnit;
         private readonly CardResult cardResult;
-        private readonly Action<Performance, float> builder;
+        private readonly Action<Performance, double> builder;
 
         public CmasPenalization(string id, string reason, string shortReason, CardResult cardResult)
         {
@@ -573,7 +573,7 @@ namespace FreediveComp.Models
             this.cardResult = cardResult;
         }
 
-        public CmasPenalization(string id, string reason, string shortReason, string inputName, string inputUnit, Action<Performance, float> builder)
+        public CmasPenalization(string id, string reason, string shortReason, string inputName, string inputUnit, Action<Performance, double> builder)
         {
             this.id = id;
             this.reason = reason;
@@ -598,13 +598,15 @@ namespace FreediveComp.Models
 
         public CardResult CardResult => cardResult;
 
-        public Penalization BuildPenalization(float input, ActualResult result)
+        public Penalization BuildPenalization(double input, ActualResult result)
         {
             Penalization penalization = new Penalization
             {
                 PenalizationId = id,
                 Reason = reason,
                 ShortReason = shortReason,
+                IsShortPerformance = false,
+                RuleInput = HasInput ? input : (double?)null,
                 Performance = new Performance()
             };
             builder?.Invoke(penalization.Performance, input);

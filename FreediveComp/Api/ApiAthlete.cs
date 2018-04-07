@@ -9,13 +9,19 @@ namespace FreediveComp.Api
     {
         Athlete GetAthlete(string raceId, string athleteId);
         void PostAthlete(string raceId, string athleteId, Athlete athlete);
-        void PostAthleteResult(string raceId, string athleteId, string authenticationToken, ReportActualResult result);
+        void PostAthleteResult(string raceId, string athleteId, string authenticationToken, ActualResult result);
     }
 
     public class ApiAthlete : IApiAthlete
     {
         private readonly IRepositorySetProvider repositorySetProvider;
         private readonly IRulesRepository rulesRepository;
+
+        public ApiAthlete(IRepositorySetProvider repositorySetProvider, IRulesRepository rulesRepository)
+        {
+            this.repositorySetProvider = repositorySetProvider;
+            this.rulesRepository = rulesRepository;
+        }
 
         public Athlete GetAthlete(string raceId, string athleteId)
         {
@@ -97,13 +103,123 @@ namespace FreediveComp.Api
             repositorySet.Athletes.SaveAthlete(athleteModel);
         }
 
-        public void PostAthleteResult(string raceId, string athleteId, string authenticationToken, ReportActualResult result)
+        public void PostAthleteResult(string raceId, string athleteId, string authenticationToken, ActualResult incomingResult)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(athleteId)) throw new ArgumentNullException("Missing AthleteId");
-            var repositorySet = repositorySetProvider.GetRepositorySet(raceId);
+            if (string.IsNullOrEmpty(authenticationToken)) throw new ArgumentNullException("Missing AuthenticationToken");
+            if (string.IsNullOrEmpty(incomingResult.DisciplineId)) throw new ArgumentNullException("Missing DisciplineId");
 
-            throw new NotImplementedException();
+            var repositorySet = repositorySetProvider.GetRepositorySet(raceId);
+            var athlete = repositorySet.Athletes.FindAthlete(athleteId);
+            if (athlete == null) throw new ArgumentOutOfRangeException("Unknown AthleteId " + athleteId);
+            var judge = repositorySet.Judges.AuthenticateJudge(authenticationToken);
+            if (judge == null) throw new ArgumentOutOfRangeException("Wrong AuthenticationToken");
+            var discipline = repositorySet.Disciplines.FindDiscipline(incomingResult.DisciplineId);
+            if (discipline == null) throw new ArgumentOutOfRangeException("Wrong DisciplineId " + incomingResult.DisciplineId);
+            var rules = rulesRepository.Get(discipline.Rules);
+
+            ActualResult finalResult;
+            if (incomingResult.JudgeOverride)
+            {
+                finalResult = incomingResult;
+                finalResult.JudgeId = judge.JudgeId;
+            }
+            else
+            {
+                var announcement = athlete.Announcements.FirstOrDefault(a => a.DisciplineId == incomingResult.DisciplineId);
+                if (announcement == null) throw new ArgumentOutOfRangeException("No announcement for " + incomingResult.DisciplineId);
+
+                finalResult = new ActualResult();
+                finalResult.DisciplineId = discipline.DisciplineId;
+                finalResult.JudgeId = judge.JudgeId;
+                finalResult.Penalizations = new List<Penalization>();
+                finalResult.CardResult = incomingResult.CardResult;
+
+                foreach (var incomingPenalization in incomingResult.Penalizations)
+                {
+                    if (incomingPenalization.IsShortPerformance) continue;  // we will calculate this ourselves
+
+                    if (incomingPenalization.PenalizationId == null)        // custom penalization
+                    {
+                        VerifyResult(rules.HasDepth, false, incomingPenalization.Performance.Depth, "Penalization.Depth");
+                        VerifyResult(rules.HasDuration, false, incomingPenalization.Performance.DurationSeconds, "Penalization.Duration");
+                        VerifyResult(rules.HasDistance, false, incomingPenalization.Performance.Distance, "Penalization.Distance");
+                        VerifyResult(rules.CanConvertToPoints, false, incomingPenalization.Performance.Points, "Penalization.Points");
+                        finalResult.Penalizations.Add(incomingPenalization);
+                    }
+                    else
+                    {
+                        var rulesPenalization = rules.Penalizations.FirstOrDefault(p => p.Id == incomingPenalization.PenalizationId);
+                        if (rulesPenalization == null) throw new ArgumentOutOfRangeException("Unknown Penalization.Id " + incomingPenalization.PenalizationId);
+                        var finalPenalization = rulesPenalization.BuildPenalization(incomingPenalization.RuleInput ?? 0, finalResult);
+                        if (finalPenalization != null)
+                        {
+                            finalResult.Penalizations.Add(incomingPenalization);
+                            finalResult.CardResult = CombineCards(finalResult.CardResult, rulesPenalization.CardResult);
+                        }
+                    }
+                }
+
+                bool didFinish = finalResult.CardResult == CardResult.White || finalResult.CardResult == CardResult.Yellow;
+                VerifyResult(rules.HasDepth, rules.HasDepth && didFinish, incomingResult.Performance.Depth, "Performance.Depth");
+                VerifyResult(rules.HasDuration, rules.HasDuration && didFinish, incomingResult.Performance.DurationSeconds, "Performance.Duration");
+                VerifyResult(rules.HasDistance, rules.HasDistance && didFinish, incomingResult.Performance.Distance, "Performance.Distance");
+                finalResult.Performance = incomingResult.Performance;
+                if (!rules.CanConvertToPoints) finalResult.Performance.Points = null;
+                else finalResult.Performance.Points = rules.GetPoints(incomingResult.Performance);
+
+                var shortPenalization = rules.BuildShortPenalization(announcement.Performance, finalResult.Performance);
+                if (shortPenalization != null)
+                {
+                    finalResult.Penalizations.Insert(0, shortPenalization);
+                    finalResult.CardResult = CombineCards(finalResult.CardResult, CardResult.Yellow);
+                }
+
+                finalResult.FinalPerformance = new Performance();
+                CalculateFinalPerformance(finalResult, f => f.DurationSeconds, (p, s) => p.DurationSeconds = s);
+                CalculateFinalPerformance(finalResult, f => f.Depth, (p, s) => p.Depth = s);
+                CalculateFinalPerformance(finalResult, f => f.Distance, (p, s) => p.Distance = s);
+                CalculateFinalPerformance(finalResult, f => f.Points, (p, s) => p.Points = s);
+            }
+
+            athlete.ActualResults.Add(finalResult);
+        }
+
+        private static void VerifyResult(bool allowsComponent, bool requiresComponent, double? value, string name)
+        {
+            if (!allowsComponent && value != null) throw new ArgumentOutOfRangeException("Unexpected " + name);
+            if (requiresComponent && value == null) throw new ArgumentNullException("Missing " + name);
+            if (allowsComponent && value < 0) throw new ArgumentNullException("Negative " + name);
+        }
+
+        private static CardResult CombineCards(CardResult a, CardResult b)
+        {
+            if (a == CardResult.Red || b == CardResult.Red) return CardResult.Red;
+            if (a == CardResult.Yellow || b == CardResult.Yellow) return CardResult.Yellow;
+            if (a == CardResult.DidNotStart || b == CardResult.DidNotStart) return CardResult.DidNotStart;
+            if (a == CardResult.White || b == CardResult.White) return CardResult.White;
+            return CardResult.None;
+        }
+
+        private static void CalculateFinalPerformance(ActualResult result, Func<Performance, double?> extractor, Action<Performance, double?> setter)
+        {
+            double? realized = extractor(result.Performance);
+            if (realized == null)
+            {
+                setter(result.FinalPerformance, null);
+            }
+            else
+            {
+                double final = realized.Value;
+                foreach (var penalization in result.Penalizations)
+                {
+                    double? minus = extractor(penalization.Performance);
+                    if (minus != null) final -= minus.Value;
+                }
+                if (final < 0) final = 0;
+                setter(result.FinalPerformance, final);
+            }
         }
 
         public static AthleteProfile BuildProfile(Models.Athlete model)
