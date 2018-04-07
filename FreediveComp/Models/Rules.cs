@@ -61,9 +61,13 @@ namespace FreediveComp.Models
         bool HasDistance { get; }
         bool HasDepth { get; }
         bool CanConvertToPoints { get; }
+        PerformanceComponent PrimaryComponent { get; }
+        PerformanceComponent PenalizationsTarget { get; }
+        ICalculation PointsCalculation { get; }
         double GetPoints(IPerformance result);
         IEnumerable<IRulesPenalization> Penalizations { get; }
         Penalization BuildShortPenalization(IPerformance announcement, IPerformance realized);
+        ICalculation ShortCalculation { get; }
         IComparer<ICombinedResult> ResultsComparer { get; }
     }
 
@@ -77,6 +81,8 @@ namespace FreediveComp.Models
         string InputUnit { get; }
         CardResult CardResult { get; }
         Penalization BuildPenalization(double input, ActualResult result);
+        ICalculation PenaltyCalculation { get; }
+        PerformanceComponent PenalizationTarget { get; }
     }
 
     public interface IPerformance
@@ -204,14 +210,20 @@ namespace FreediveComp.Models
         public static readonly IComparer<ICombinedResult> DiffDepth = new CombinedResultAnnouncementDifferenceComparer<double>(r => r.Depth, (r, a) => r - a);
     }
 
+    public class PointsCalculator
+    {
+        public static double GetPoints(IPerformance performance, ICalculation calculation)
+        {
+            return calculation.Evaluate(new CalculationVariables(null, null, performance)) ?? 0;
+        }
+    }
+
     public class ShortPenalizationCalculator
     {
-        public delegate void CalculationDelegate(double announcement, double realized, Performance penalty);
-
-        public static Penalization Build(IPerformance announced, IPerformance realized, Func<IPerformance, double?> extractor, CalculationDelegate calculation)
+        public static Penalization Build(IPerformance announced, IPerformance realized, IRules rules)
         {
-            double announcedValue = extractor(announced) ?? 0;
-            double realizedValue = extractor(realized) ?? 0;
+            double announcedValue = rules.PrimaryComponent.Get(announced) ?? 0;
+            double realizedValue = rules.PrimaryComponent.Get(realized) ?? 0;
             if (announcedValue <= realizedValue) return null;
             var penalization = new Penalization
             {
@@ -221,7 +233,8 @@ namespace FreediveComp.Models
                 Reason = "Short performance",
                 Performance = new Performance()
             };
-            calculation(announcedValue, realizedValue, penalization.Performance);
+            var penalty = rules.ShortCalculation.Evaluate(new CalculationVariables(null, announced, realized));
+            rules.PenalizationsTarget.Modify(penalization.Performance, penalty);
             return penalization;
         }
     }
@@ -252,14 +265,22 @@ namespace FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalPoints)
             .Ascending(CombinedResultsComparers.DiffDuration);
 
+        public ICalculation PointsCalculation => Calculation.Multiply(Calculation.Constant(0.2), Calculation.RealizedDuration);
+
+        public ICalculation ShortCalculation => Calculation.Ceiling(Calculation.Multiply(Calculation.Constant(0.2), Calculation.Minus(Calculation.AnnouncedDuration, Calculation.RealizedDuration)));
+
+        public PerformanceComponent PrimaryComponent => PerformanceComponent.Duration;
+
+        public PerformanceComponent PenalizationsTarget => PerformanceComponent.Points;
+
         public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
-            return ShortPenalizationCalculator.Build(announcement, result, p => p.DurationSeconds(), (a, r, p) => p.Points = Math.Ceiling(0.2 * (a - r)));
+            return ShortPenalizationCalculator.Build(announcement, result, this);
         }
 
         public double GetPoints(IPerformance result)
         {
-            return 0.2 * result.DurationSeconds() ?? 0;
+            return PointsCalculator.GetPoints(result, PointsCalculation);
         }
     }
 
@@ -292,14 +313,22 @@ namespace FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalPoints)
             .Ascending(CombinedResultsComparers.DiffDistance);
 
+        public PerformanceComponent PrimaryComponent => PerformanceComponent.Distance;
+
+        public PerformanceComponent PenalizationsTarget => PerformanceComponent.Points;
+
+        public ICalculation PointsCalculation => Calculation.Multiply(Calculation.Constant(0.5), Calculation.RealizedDistance);
+
+        public ICalculation ShortCalculation => Calculation.Multiply(Calculation.Constant(0.5), Calculation.Minus(Calculation.AnnouncedDistance, Calculation.RealizedDistance));
+
         public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
-            return ShortPenalizationCalculator.Build(announcement, result, p => p.Distance, (a, r, p) => p.Points = (a - r) * 0.5);
+            return ShortPenalizationCalculator.Build(announcement, result, this);
         }
 
         public double GetPoints(IPerformance result)
         {
-            return 0.5 * result.Distance ?? 0;
+            return PointsCalculator.GetPoints(result, PointsCalculation);
         }
     }
 
@@ -332,25 +361,35 @@ namespace FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalPoints)
             .Ascending(CombinedResultsComparers.DiffDepth);
 
+        public PerformanceComponent PrimaryComponent => PerformanceComponent.Depth;
+
+        public PerformanceComponent PenalizationsTarget => PerformanceComponent.Points;
+
+        public ICalculation PointsCalculation => Calculation.RealizedDepth;
+
+        public ICalculation ShortCalculation => Calculation.Minus(Calculation.AnnouncedDepth, Calculation.RealizedDepth);
+
         public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
-            return ShortPenalizationCalculator.Build(announcement, result, p => p.Depth, (a, r, p) => p.Points = a - r);
+            return ShortPenalizationCalculator.Build(announcement, result, this);
         }
 
         public double GetPoints(IPerformance result)
         {
-            return result.Depth ?? 0;
+            return PointsCalculator.GetPoints(result, PointsCalculation);
         }
     }
 
     public class AidaPenalization : IRulesPenalization
     {
-        public static AidaPenalization EarlyStart = new AidaPenalization("EarlyStart", "Early start", "Early", "Time (seconds)", "s", i => Math.Ceiling(i * 0.2f));
-        public static AidaPenalization LateStart = new AidaPenalization("LateStart", "Late start", "Late", "Time (seconds)", "s", i => Math.Ceiling(i * 0.2f));
-        public static AidaPenalization NoWall = new AidaPenalization("NoWall", "Wrong turn <1m", "Turn", "Count", "x", i => 5 * i);
+        public static AidaPenalization EarlyStart = new AidaPenalization("EarlyStart", "Early start", "Early", "Time (seconds)", "s",
+            Calculation.Ceiling(Calculation.Multiply(Calculation.Constant(0.2), Calculation.Input)));
+        public static AidaPenalization LateStart = new AidaPenalization("LateStart", "Late start", "Late", "Time (seconds)", "s",
+            Calculation.Ceiling(Calculation.Multiply(Calculation.Constant(0.2), Calculation.Input)));
+        public static AidaPenalization NoWall = new AidaPenalization("NoWall", "Wrong turn <1m", "Turn", "Count", "x", 5);
         public static AidaPenalization ExitHelp = new AidaPenalization("ExitHelp", "Push/pull on exit", "Exit", 5);
         public static AidaPenalization NoTag = new AidaPenalization("NoTag", "No tag delivered", "Tag", 1);
-        public static AidaPenalization GrabLine = new AidaPenalization("GrabLine", "Grab line", "Grab", "Count", "x", i => 5 * i);
+        public static AidaPenalization GrabLine = new AidaPenalization("GrabLine", "Grab line", "Grab", "Count", "x", 5);
         public static AidaPenalization Lanyard = new AidaPenalization("Lanyard", "Removed lanyard", "Lanyard", 10);
         public static AidaPenalization Blackout = new AidaPenalization("Blackout", "Blackout", "BO", CardResult.Red);
         public static AidaPenalization SurfaceProtocol = new AidaPenalization("SurfaceProtocol", "Surface protocol", "SP", CardResult.Red);
@@ -360,18 +399,12 @@ namespace FreediveComp.Models
         public static AidaPenalization WrongTurn = new AidaPenalization("WrongTurn", "Wrong turn >1m", "Turn", CardResult.Red);
 
         private string id, reason, shortReason, inputName, inputUnit;
-        private Func<double, double> calculator;
+        private ICalculation penaltyCalculation;
         private CardResult cardResult;
 
         public AidaPenalization(string id, string reason, string shortReason, double fixedPoints)
+            : this(id, reason, shortReason, null, null, Calculation.Constant(fixedPoints))
         {
-            this.id = id;
-            this.reason = reason;
-            this.shortReason = shortReason;
-            this.inputName = null;
-            this.inputUnit = null;
-            this.calculator = i => fixedPoints;
-            this.cardResult = CardResult.Yellow;
         }
 
         public AidaPenalization(string id, string reason, string shortReason, CardResult cardResult)
@@ -381,18 +414,23 @@ namespace FreediveComp.Models
             this.shortReason = shortReason;
             this.inputName = null;
             this.inputUnit = null;
-            this.calculator = null;
+            this.penaltyCalculation = null;
             this.cardResult = cardResult;
         }
 
-        public AidaPenalization(string id, string reason, string shortReason, string inputName, string inputUnit, Func<double, double> calculator)
+        public AidaPenalization(string id, string reason, string shortReason, string inputName, string inputUnit, double fixedPoints)
+            : this(id, reason, shortReason, inputName, inputUnit, Calculation.Multiply(Calculation.Constant(fixedPoints), Calculation.Input))
+        {
+        }
+
+        public AidaPenalization(string id, string reason, string shortReason, string inputName, string inputUnit, ICalculation penaltyCalculation)
         {
             this.id = id;
             this.reason = reason;
             this.shortReason = shortReason;
             this.inputName = inputName;
             this.inputUnit = inputUnit;
-            this.calculator = calculator;
+            this.penaltyCalculation = penaltyCalculation;
             this.cardResult = CardResult.Yellow;
         }
 
@@ -410,6 +448,10 @@ namespace FreediveComp.Models
 
         public CardResult CardResult => cardResult;
 
+        public ICalculation PenaltyCalculation => penaltyCalculation;
+
+        public PerformanceComponent PenalizationTarget => PerformanceComponent.Points;
+
         public Penalization BuildPenalization(double input, ActualResult result)
         {
             return new Penalization
@@ -420,7 +462,7 @@ namespace FreediveComp.Models
                 RuleInput = inputName == null ? null : (double?)input,
                 Performance = new Performance
                 {
-                    Points = calculator(input)
+                    Points = penaltyCalculation.Evaluate(new CalculationVariables(input, null, result.Performance))
                 }
             };
         }
@@ -448,9 +490,17 @@ namespace FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalDuration)
             .Ascending(CombinedResultsComparers.DiffDuration);
 
+        public PerformanceComponent PrimaryComponent => PerformanceComponent.Distance;
+
+        public PerformanceComponent PenalizationsTarget => PerformanceComponent.Distance;
+
+        public ICalculation PointsCalculation => null;
+
+        public ICalculation ShortCalculation => Calculation.Minus(Calculation.AnnouncedDuration, Calculation.RealizedDuration);
+
         public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
-            return ShortPenalizationCalculator.Build(announcement, result, p => p.DurationSeconds(), (a, r, p) => p.DurationSeconds = a - r);
+            return ShortPenalizationCalculator.Build(announcement, result, this);
         }
 
         public double GetPoints(IPerformance result)
@@ -482,9 +532,17 @@ namespace FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalDistance)
             .Ascending(CombinedResultsComparers.DiffDistance);
 
+        public PerformanceComponent PrimaryComponent => PerformanceComponent.Distance;
+
+        public PerformanceComponent PenalizationsTarget => PerformanceComponent.Distance;
+
+        public ICalculation PointsCalculation => null;
+
+        public ICalculation ShortCalculation => Calculation.Plus(Calculation.Constant(5), Calculation.Minus(Calculation.AnnouncedDistance, Calculation.RealizedDistance));
+
         public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
-            return ShortPenalizationCalculator.Build(announcement, result, p => p.Distance, (a, r, p) => p.Distance = a - r + 5);
+            return ShortPenalizationCalculator.Build(announcement, result, this);
         }
 
         public double GetPoints(IPerformance result)
@@ -518,9 +576,17 @@ namespace FreediveComp.Models
             .Ascending(CombinedResultsComparers.DiffDepth)
             .Ascending(CombinedResultsComparers.DiffDuration);
 
+        public PerformanceComponent PrimaryComponent => PerformanceComponent.Depth;
+
+        public PerformanceComponent PenalizationsTarget => PerformanceComponent.Depth;
+
+        public ICalculation PointsCalculation => null;
+
+        public ICalculation ShortCalculation => Calculation.Plus(Calculation.Constant(5), Calculation.Minus(Calculation.AnnouncedDistance, Calculation.RealizedDistance));
+
         public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
-            return ShortPenalizationCalculator.Build(announcement, result, p => p.Depth, (a, r, p) => p.Depth = a - r + 5);
+            return ShortPenalizationCalculator.Build(announcement, result, this);
         }
 
         public double GetPoints(IPerformance result)
@@ -554,9 +620,17 @@ namespace FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalDistance)
             .Ascending(CombinedResultsComparers.DiffDistance);
 
+        public PerformanceComponent PrimaryComponent => PerformanceComponent.Distance;
+
+        public PerformanceComponent PenalizationsTarget => PerformanceComponent.Distance;
+
+        public ICalculation PointsCalculation => null;
+
+        public ICalculation ShortCalculation => Calculation.Plus(Calculation.Constant(5), Calculation.Minus(Calculation.AnnouncedDistance, Calculation.RealizedDistance));
+
         public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
-            return ShortPenalizationCalculator.Build(announcement, result, p => p.Distance, (a, r, p) => p.Distance = a - r + 5);
+            return ShortPenalizationCalculator.Build(announcement, result, this);
         }
 
         public double GetPoints(IPerformance result)
@@ -572,14 +646,15 @@ namespace FreediveComp.Models
         public static CmasPenalization MissedStart = new CmasPenalization("MissedStart", "Missed start", "DNS", CardResult.DidNotStart);
         public static CmasPenalization NoDisc = new CmasPenalization("NoDisc", "Not touched disc", "Disc", CardResult.Red);
         public static CmasPenalization Corner = new CmasPenalization("Corner", "Cut corner", "Corner", CardResult.Red);
-        public static CmasPenalization Lane = new CmasPenalization("Lane", "Out of lane", "Lane", "Count", "x", (p, i) => p.Distance = i * 5);
-        public static CmasPenalization NoTag = new CmasPenalization("NoTag", "No tag delivered", "Tag", null, null, (p, i) => p.Depth = 5);
-        public static CmasPenalization Grab = new CmasPenalization("Grab", "Grab line", "Grab", "Count", "x", (p, i) => p.Depth = 5 * i);
-        public static CmasPenalization BadMarker = new CmasPenalization("BadMarker", "No tag secured", "Tag", null, null, (p, i) => p.Distance = 5);
+        public static CmasPenalization Lane = new CmasPenalization("Lane", "Out of lane", "Lane", "Count", "x", PerformanceComponent.Distance, 5);
+        public static CmasPenalization NoTag = new CmasPenalization("NoTag", "No tag delivered", "Tag", null, null, PerformanceComponent.Depth, 5);
+        public static CmasPenalization Grab = new CmasPenalization("Grab", "Grab line", "Grab", "Count", "x", PerformanceComponent.Depth, 5);
+        public static CmasPenalization BadMarker = new CmasPenalization("BadMarker", "No tag secured", "Tag", null, null, PerformanceComponent.Distance, 5);
 
         private readonly string id, reason, shortReason, inputName, inputUnit;
         private readonly CardResult cardResult;
-        private readonly Action<Performance, double> builder;
+        private readonly PerformanceComponent component;
+        private readonly ICalculation calculation;
 
         public CmasPenalization(string id, string reason, string shortReason, CardResult cardResult)
         {
@@ -589,7 +664,7 @@ namespace FreediveComp.Models
             this.cardResult = cardResult;
         }
 
-        public CmasPenalization(string id, string reason, string shortReason, string inputName, string inputUnit, Action<Performance, double> builder)
+        public CmasPenalization(string id, string reason, string shortReason, string inputName, string inputUnit, PerformanceComponent component, double value)
         {
             this.id = id;
             this.reason = reason;
@@ -597,7 +672,15 @@ namespace FreediveComp.Models
             this.cardResult = CardResult.Yellow;
             this.inputName = inputName;
             this.inputUnit = inputUnit;
-            this.builder = builder;
+            this.component = component;
+            if (inputName == null)
+            {
+                this.calculation = Calculation.Constant(value);
+            }
+            else
+            {
+                this.calculation = Calculation.Multiply(Calculation.Constant(value), Calculation.Input);
+            }
         }
 
         public string Id => id;
@@ -614,6 +697,10 @@ namespace FreediveComp.Models
 
         public CardResult CardResult => cardResult;
 
+        public ICalculation PenaltyCalculation => calculation;
+
+        public PerformanceComponent PenalizationTarget => component;
+
         public Penalization BuildPenalization(double input, ActualResult result)
         {
             Penalization penalization = new Penalization
@@ -625,7 +712,10 @@ namespace FreediveComp.Models
                 RuleInput = HasInput ? input : (double?)null,
                 Performance = new Performance()
             };
-            builder?.Invoke(penalization.Performance, input);
+            if (calculation != null)
+            {
+                component.Modify(penalization.Performance, calculation.Evaluate(new CalculationVariables(input, null, result.Performance)));
+            }
             return penalization;
         }
     }
@@ -647,6 +737,14 @@ namespace FreediveComp.Models
         public IEnumerable<IRulesPenalization> Penalizations => new IRulesPenalization[0];
 
         public IComparer<ICombinedResult> ResultsComparer => new CombinedResultCompositeComparer();
+
+        public PerformanceComponent PrimaryComponent => PerformanceComponent.None;
+
+        public PerformanceComponent PenalizationsTarget => PerformanceComponent.None;
+
+        public ICalculation PointsCalculation => null;
+
+        public ICalculation ShortCalculation => null;
 
         public Penalization BuildShortPenalization(IPerformance announcement, IPerformance realized)
         {

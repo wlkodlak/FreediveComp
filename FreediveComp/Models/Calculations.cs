@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 
 namespace FreediveComp.Models
 {
@@ -10,15 +7,53 @@ namespace FreediveComp.Models
         double? Evaluate(ICalculationVariables variables);
     }
 
+    public static class Calculation
+    {
+        public static ICalculation Ceiling(ICalculation argument) => new CalculationCeiling(argument);
+        public static ICalculation Multiply(ICalculation a, ICalculation b) => new CalculationOperator('*', a, b);
+        public static ICalculation Plus(ICalculation a, ICalculation b) => new CalculationOperator('+', a, b);
+        public static ICalculation Minus(ICalculation a, ICalculation b) => new CalculationOperator('-', a, b);
+        public static ICalculation Divide(ICalculation a, ICalculation b) => new CalculationOperator('/', a, b);
+        public static ICalculation Constant(double value) => new CalculationConstant(value);
+        public static ICalculation Input => new CalculationVariable("Input");
+        public static ICalculation AnnouncedDuration => new CalculationVariable("AnnouncedDuration");
+        public static ICalculation AnnouncedDepth => new CalculationVariable("AnnouncedDepth");
+        public static ICalculation AnnouncedDistance => new CalculationVariable("AnnouncedDistance");
+        public static ICalculation RealizedDuration => new CalculationVariable("RealizedDuration");
+        public static ICalculation RealizedDepth => new CalculationVariable("RealizedDepth");
+        public static ICalculation RealizedDistance => new CalculationVariable("RealizedDistance");
+    }
+
     public interface ICalculationVariables
     {
         double? Input { get; }
-        double? AnnouncedDurationSeconds { get; }
+        double? AnnouncedDuration { get; }
         double? AnnouncedDepth { get; }
         double? AnnouncedDistance { get; }
-        double? RealizedDurationSeconds { get; }
+        double? RealizedDuration { get; }
         double? RealizedDepth { get; }
         double? RealizedDistance { get; }
+    }
+
+    public class CalculationVariables : ICalculationVariables
+    {
+        private readonly double? input;
+        private readonly IPerformance announced, realized;
+
+        public CalculationVariables(double? input, IPerformance announced, IPerformance realized)
+        {
+            this.input = input;
+            this.announced = announced;
+            this.realized = realized;
+        }
+
+        public double? Input => input;
+        public double? AnnouncedDuration => announced?.DurationSeconds();
+        public double? AnnouncedDepth => announced?.Depth;
+        public double? AnnouncedDistance => announced?.Distance;
+        public double? RealizedDuration => realized?.DurationSeconds();
+        public double? RealizedDepth => realized?.Depth;
+        public double? RealizedDistance => realized?.Distance;
     }
 
     public class CalculationCeiling : ICalculation
@@ -96,10 +131,10 @@ namespace FreediveComp.Models
                 case "Input": return variables.Input;
                 case "AnnouncedDepth": return variables.AnnouncedDepth;
                 case "AnnouncedDistance": return variables.AnnouncedDistance;
-                case "AnnouncedDurationSeconds": return variables.AnnouncedDurationSeconds;
+                case "AnnouncedDuration": return variables.AnnouncedDuration;
                 case "RealizedDepth": return variables.RealizedDepth;
                 case "RealizedDistance": return variables.RealizedDistance;
-                case "RealizedDurationSeconds": return variables.RealizedDurationSeconds;
+                case "RealizedDuration": return variables.RealizedDuration;
                 default: return null;
             }
         }

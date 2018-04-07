@@ -328,7 +328,93 @@ namespace FreediveComp.Models
 
             return 1000 * matches / (10 * matches + 2 * extra + 100 * unmatched);
         }
+    }
 
+    public struct PerformanceComponent
+    {
+        public static readonly PerformanceComponent None = new PerformanceComponent();
+        public static readonly PerformanceComponent Distance = new PerformanceComponent(1);
+        public static readonly PerformanceComponent Depth = new PerformanceComponent(2);
+        public static readonly PerformanceComponent Duration = new PerformanceComponent(3);
+        public static readonly PerformanceComponent Points = new PerformanceComponent(4);
 
+        private readonly int value;
+
+        private PerformanceComponent(int value)
+        {
+            this.value = value;
+        }
+
+        public static PerformanceComponent Parse(string input)
+        {
+            switch (input)
+            {
+                case "Distance": return Distance;
+                case "Depth": return Depth;
+                case "Duration": return Duration;
+                case "Points": return Points;
+                default: return None;
+            }
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is PerformanceComponent oth)
+            {
+                return value == oth.value;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            return value;
+        }
+
+        public override string ToString()
+        {
+            switch (value)
+            {
+                case 1: return "Distance";
+                case 2: return "Depth";
+                case 3: return "Duration";
+                case 4: return "Points";
+                default: return "";
+            }
+        }
+
+        public double? Get(IPerformance performance)
+        {
+            switch (value)
+            {
+                case 1: return performance.Distance;
+                case 2: return performance.Depth;
+                case 3: return performance.DurationSeconds();
+                case 4: return performance.Points;
+                default: return null;
+            }
+        }
+
+        public void Modify(Performance performance, double? value)
+        {
+            switch (value)
+            {
+                case 1:
+                    performance.Distance = value;
+                    break;
+                case 2:
+                    performance.Depth = value;
+                    break;
+                case 3:
+                    performance.DurationSeconds = value;
+                    break;
+                case 4:
+                    performance.Points = value;
+                    break;
+            }
+        }
     }
 }
