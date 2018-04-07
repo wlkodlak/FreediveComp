@@ -225,4 +225,12 @@ namespace FreediveComp.Api
         public string JudgeName { get; set; }
         public List<string> DeviceIds { get; set; }
     }
+
+    public class RaceSearchResultDto
+    {
+        public string RaceId { get; set; }
+        public string Name { get; set; }
+        public DateTimeOffset? Start { get; set; }
+        public DateTimeOffset? End { get; set; }
+    }
 }

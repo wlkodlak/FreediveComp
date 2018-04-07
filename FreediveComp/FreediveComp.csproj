@@ -80,11 +80,14 @@
     <Compile Include="Api\ApiAuthentication.cs" />
     <Compile Include="Api\ApiMessages.cs" />
     <Compile Include="Api\ApiReports.cs" />
+    <Compile Include="Api\ApiRules.cs" />
+    <Compile Include="Api\ApiSearch.cs" />
     <Compile Include="Api\ApiSetup.cs" />
     <Compile Include="Api\ApiStartingList.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\Calculations.cs" />
     <Compile Include="Models\DataFolder.cs" />
     <Compile Include="Models\JudgesJsonRepository.cs" />
     <Compile Include="Models\Model.cs" />

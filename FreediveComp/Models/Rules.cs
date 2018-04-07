@@ -345,8 +345,8 @@ namespace FreediveComp.Models
 
     public class AidaPenalization : IRulesPenalization
     {
-        public static AidaPenalization EarlyStart = new AidaPenalization("EarlyStart", "Early start", "Start", "Time", "s", i => Math.Ceiling(i * 0.2f));
-        public static AidaPenalization LateStart = new AidaPenalization("LateStart", "Late start", "Late", "Time", "s", i => Math.Ceiling(i * 0.2f));
+        public static AidaPenalization EarlyStart = new AidaPenalization("EarlyStart", "Early start", "Early", "Time (seconds)", "s", i => Math.Ceiling(i * 0.2f));
+        public static AidaPenalization LateStart = new AidaPenalization("LateStart", "Late start", "Late", "Time (seconds)", "s", i => Math.Ceiling(i * 0.2f));
         public static AidaPenalization NoWall = new AidaPenalization("NoWall", "Wrong turn <1m", "Turn", "Count", "x", i => 5 * i);
         public static AidaPenalization ExitHelp = new AidaPenalization("ExitHelp", "Push/pull on exit", "Exit", 5);
         public static AidaPenalization NoTag = new AidaPenalization("NoTag", "No tag delivered", "Tag", 1);

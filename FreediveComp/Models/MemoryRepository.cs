@@ -294,7 +294,7 @@ namespace FreediveComp.Models
     {
         private Dictionary<string, RaceIndexEntry> entries = new Dictionary<string, RaceIndexEntry>();
 
-        public List<RaceIndexEntry> Find(HashSet<string> search, DateTimeOffset? date)
+        public List<RaceIndexEntry> Search(HashSet<string> search, DateTimeOffset? date)
         {
             lock (this)
             {

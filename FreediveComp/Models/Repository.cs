@@ -60,7 +60,7 @@ namespace FreediveComp.Models
     public interface IRacesIndexRepository
     {
         List<RaceIndexEntry> GetAll();
-        List<RaceIndexEntry> Find(HashSet<string> search, DateTimeOffset? date);
+        List<RaceIndexEntry> Search(HashSet<string> search, DateTimeOffset? date);
         void SaveRace(RaceIndexEntry entry);
     }
 }

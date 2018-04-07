@@ -22,7 +22,7 @@ namespace FreediveComp.Models
             this.serializer = JsonSerializer.Create();
         }
 
-        public List<RaceIndexEntry> Find(HashSet<string> search, DateTimeOffset? date)
+        public List<RaceIndexEntry> Search(HashSet<string> search, DateTimeOffset? date)
         {
             return GetData(entries => FindInternal(entries, search, date));
         }
