@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace FreediveComp.Models
@@ -11,18 +12,76 @@ namespace FreediveComp.Models
         public string Club { get; set; }
         public string CountryName { get; set; }
         public string ProfilePhotoName { get; set; }
-        public Gender Gender { get; set; }
+        public Sex Sex { get; set; }
         public string Category { get; set; }
         public string ModeratorNotes { get; set; }
         public List<Announcement> Announcements { get; set; }
         public List<ActualResult> ActualResults { get; set; }
     }
 
-    public enum Gender
+    public struct Sex
     {
-        Unspecified,
-        Male,
-        Female
+        public static readonly Sex Unspecified = new Sex();
+        public static readonly Sex Male = new Sex(1);
+        public static readonly Sex Female = new Sex(2);
+
+        private readonly int data;
+
+        private Sex(int data)
+        {
+            this.data = data;
+        }
+
+        public override string ToString()
+        {
+            switch (data)
+            {
+                case 1: return "Male";
+                case 2: return "Female";
+                default: return "";
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            return data;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Sex oth)
+            {
+                return data == oth.data;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static Sex Parse(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return Unspecified;
+            switch (input)
+            {
+                case "Male": return Male;
+                case "Female": return Female;
+                default: return Unspecified;
+            }
+        }
+    }
+
+    public class SexJsonConverter : JsonConverter<Sex>
+    {
+        public override Sex ReadJson(JsonReader reader, Type objectType, Sex existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            return Sex.Parse((string)reader.Value);
+        }
+
+        public override void WriteJson(JsonWriter writer, Sex value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString());
+        }
     }
 
     public class Announcement
@@ -81,6 +140,7 @@ namespace FreediveComp.Models
         public string ShortName { get; set; }
         public string LongName { get; set; }
         public string Rules { get; set; }
+        public bool AnnouncementsClosed { get; set; }
     }
 
     public class RaceSettings

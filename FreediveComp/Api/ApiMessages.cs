@@ -27,7 +27,7 @@ namespace FreediveComp.Api
         public string Club { get; set; }
         public string CountryName { get; set; }
         public string ProfilePhotoName { get; set; }
-        public string Gender { get; set; }
+        public string Sex { get; set; }
         public string Category { get; set; }
         public string ModeratorNotes { get; set; }
     }
