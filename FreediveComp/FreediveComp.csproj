@@ -89,11 +89,13 @@
     <Compile Include="Models\JudgesJsonRepository.cs" />
     <Compile Include="Models\Model.cs" />
     <Compile Include="Models\RaceJsonRepository.cs" />
+    <Compile Include="Models\RacesIndexJsonRepository.cs" />
     <Compile Include="Models\Repository.cs" />
     <Compile Include="Models\AthletesJsonRepository.cs" />
     <Compile Include="Models\MemoryRepository.cs" />
     <Compile Include="Models\RepositorySet.cs" />
     <Compile Include="Models\Rules.cs" />
+    <Compile Include="Models\SearchTokenizer.cs" />
     <Compile Include="Models\StartingLaneFlat.cs" />
     <Compile Include="Models\StartingListJsonRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

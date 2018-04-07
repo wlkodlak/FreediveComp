@@ -80,7 +80,6 @@ namespace FreediveComp.Api
         public double? RuleInput { get; set; }
     }
 
-
     public class ResultsListReport
     {
         public ResultsListMetadata Metadata { get; set; }
@@ -129,7 +128,10 @@ namespace FreediveComp.Api
 
     public class RaceSettingsDto
     {
+        public string RaceId { get; set; }
         public string Name { get; set; }
+        public DateTimeOffset? Start { get; set; }
+        public DateTimeOffset? End { get; set; }
     }
 
     public class StartingLaneDto

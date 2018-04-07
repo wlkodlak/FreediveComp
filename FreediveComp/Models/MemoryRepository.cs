@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace FreediveComp.Models
@@ -285,6 +286,40 @@ namespace FreediveComp.Models
                         devicesByCode[existing.ConnectCode] = existing;
                     }
                 }
+            }
+        }
+    }
+
+    public class RacesIndexRepository : IRacesIndexRepository
+    {
+        private Dictionary<string, RaceIndexEntry> entries = new Dictionary<string, RaceIndexEntry>();
+
+        public List<RaceIndexEntry> Find(HashSet<string> search, DateTimeOffset? date)
+        {
+            lock (this)
+            {
+                return entries.Values
+                    .Select(e => Tuple.Create(e, e.Match(search, date)))
+                    .Where(t => t.Item2 > 0)
+                    .OrderByDescending(t => t.Item2)
+                    .Select(t => t.Item1)
+                    .ToList();
+            }
+        }
+
+        public List<RaceIndexEntry> GetAll()
+        {
+            lock (this)
+            {
+                return entries.Values.ToList();
+            }
+        }
+
+        public void SaveRace(RaceIndexEntry entry)
+        {
+            lock (this)
+            {
+                entries[entry.RaceId] = entry;
             }
         }
     }

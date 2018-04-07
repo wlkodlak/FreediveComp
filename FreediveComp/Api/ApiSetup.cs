@@ -15,11 +15,15 @@ namespace FreediveComp.Api
     {
         private readonly IRepositorySetProvider repositorySetProvider;
         private readonly IRulesRepository rulesProvider;
+        private readonly IRacesIndexRepository racesIndexRepository;
+        private readonly SearchTokenizer tokenizer;
 
-        public ApiSetup(IRepositorySetProvider repositorySetProvider, IRulesRepository rulesProvider)
+        public ApiSetup(IRepositorySetProvider repositorySetProvider, IRulesRepository rulesProvider, IRacesIndexRepository racesIndexRepository)
         {
             this.repositorySetProvider = repositorySetProvider;
             this.rulesProvider = rulesProvider;
+            this.racesIndexRepository = racesIndexRepository;
+            this.tokenizer = new SearchTokenizer();
         }
 
         public RaceSetupDto GetSetup(string raceId)
@@ -28,18 +32,21 @@ namespace FreediveComp.Api
             IRepositorySet repositorySet = repositorySetProvider.GetRepositorySet(raceId);
 
             var raceSetup = new RaceSetupDto();
-            raceSetup.Race = BuildRaceSettings(repositorySet.RaceSettings.GetRaceSettings());
+            raceSetup.Race = BuildRaceSettings(raceId, repositorySet.RaceSettings.GetRaceSettings());
             raceSetup.StartingLanes = repositorySet.StartingLanes.GetStartingLanes().Select(BuildStartingLane).ToList();
             raceSetup.ResultsLists = repositorySet.ResultsLists.GetResultsLists().Select(BuildResultsList).ToList();
             raceSetup.Disciplines = repositorySet.Disciplines.GetDisciplines().Select(BuildDiscipline).ToList();
             return raceSetup;
         }
 
-        private static RaceSettingsDto BuildRaceSettings(RaceSettings model)
+        private static RaceSettingsDto BuildRaceSettings(string raceId, RaceSettings model)
         {
             return new RaceSettingsDto
             {
-                Name = model.Name
+                RaceId = raceId,
+                Name = model.Name,
+                Start = model.Start,
+                End = model.End
             };
         }
 
@@ -124,6 +131,7 @@ namespace FreediveComp.Api
             {
                 resultsLists.Add(VerifyResultsList(resultsList, resultsListsIds, disciplineIds));
             }
+            var indexEntry = BuildIndexEntry(raceId, raceSettings);
 
             repositorySet.RaceSettings.SetRaceSettings(raceSettings);
             repositorySet.Disciplines.SetDisciplines(disciplines);
@@ -133,6 +141,7 @@ namespace FreediveComp.Api
             {
                 repositorySet.ResultsLists.SetResultsList(resultsList);
             }
+            racesIndexRepository.SaveRace(indexEntry);
         }
 
         private RaceSettings VerifyRaceSettings(RaceSettingsDto race)
@@ -140,7 +149,9 @@ namespace FreediveComp.Api
             if (string.IsNullOrEmpty(race.Name)) throw new ArgumentNullException("Missing race name");
             return new RaceSettings
             {
-                Name = race.Name
+                Name = race.Name,
+                Start = race.Start,
+                End = race.End
             };
         }
 
@@ -160,6 +171,30 @@ namespace FreediveComp.Api
                 AnnouncementsClosed = discipline.AnnouncementsClosed,
                 Rules = discipline.Rules
             };
+        }
+
+        private StartingLane VerifyStartingLane(StartingLaneDto dto, HashSet<string> startingLaneIds)
+        {
+            if (string.IsNullOrEmpty(dto.StartingLaneId)) throw new ArgumentNullException("Missing StartingLaneId");
+            if (string.IsNullOrEmpty(dto.ShortName)) throw new ArgumentNullException("Missing StartingLane.ShortName");
+            if (!startingLaneIds.Add(dto.StartingLaneId)) throw new ArgumentOutOfRangeException("Duplicate StartingLaneId " + dto.StartingLaneId);
+
+            StartingLane startingLane = new StartingLane
+            {
+                ShortName = dto.ShortName,
+                StartingLaneId = dto.StartingLaneId,
+                SubLanes = new List<StartingLane>()
+            };
+
+            if (dto.SubLanes != null)
+            {
+                foreach (var subLane in dto.SubLanes)
+                {
+                    startingLane.SubLanes.Add(VerifyStartingLane(subLane, startingLaneIds));
+                }
+            }
+
+            return startingLane;
         }
 
         private ResultsList VerifyResultsList(ResultsListDto resultsListDto, HashSet<string> resultsListsIds, HashSet<string> disciplineIds)
@@ -206,28 +241,16 @@ namespace FreediveComp.Api
             return resultsList;
         }
 
-        private StartingLane VerifyStartingLane(StartingLaneDto dto, HashSet<string> startingLaneIds)
+        private RaceIndexEntry BuildIndexEntry(string raceId, RaceSettings raceSettings)
         {
-            if (string.IsNullOrEmpty(dto.StartingLaneId)) throw new ArgumentNullException("Missing StartingLaneId");
-            if (string.IsNullOrEmpty(dto.ShortName)) throw new ArgumentNullException("Missing StartingLane.ShortName");
-            if (!startingLaneIds.Add(dto.StartingLaneId)) throw new ArgumentOutOfRangeException("Duplicate StartingLaneId " + dto.StartingLaneId);
-
-            StartingLane startingLane = new StartingLane
+            return new RaceIndexEntry
             {
-                ShortName = dto.ShortName,
-                StartingLaneId = dto.StartingLaneId,
-                SubLanes = new List<StartingLane>()
+                RaceId = raceId,
+                Name = raceSettings.Name,
+                Start = raceSettings.Start,
+                End = raceSettings.End,
+                SearchTokens = tokenizer.GetTokens(raceSettings.Name)
             };
-
-            if (dto.SubLanes != null)
-            {
-                foreach (var subLane in dto.SubLanes)
-                {
-                    startingLane.SubLanes.Add(VerifyStartingLane(subLane, startingLaneIds));
-                }
-            }
-
-            return startingLane;
         }
     }
 }

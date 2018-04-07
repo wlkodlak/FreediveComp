@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace FreediveComp.Models
 {
@@ -54,5 +55,12 @@ namespace FreediveComp.Models
         void SaveJudge(Judge judge);
         List<JudgeDevice> FindJudgesDevices(string judgeId);
         List<Judge> GetJudges();
+    }
+
+    public interface IRacesIndexRepository
+    {
+        List<RaceIndexEntry> GetAll();
+        List<RaceIndexEntry> Find(HashSet<string> search, DateTimeOffset? date);
+        void SaveRace(RaceIndexEntry entry);
     }
 }
