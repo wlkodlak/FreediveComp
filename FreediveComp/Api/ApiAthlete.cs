@@ -205,14 +205,14 @@ namespace FreediveComp.Api
                         VerifyResult(rules.HasDepth, false, incomingPenalization.Performance.Depth, "Penalization.Depth");
                         VerifyResult(rules.HasDuration, false, incomingPenalization.Performance.DurationSeconds(), "Penalization.Duration");
                         VerifyResult(rules.HasDistance, false, incomingPenalization.Performance.Distance, "Penalization.Distance");
-                        VerifyResult(rules.CanConvertToPoints, false, incomingPenalization.Performance.Points, "Penalization.Points");
+                        VerifyResult(rules.HasPoints, false, incomingPenalization.Performance.Points, "Penalization.Points");
                         finalResult.Penalizations.Add(ExtractPenalization(incomingPenalization));
                     }
                     else
                     {
                         var rulesPenalization = rules.Penalizations.FirstOrDefault(p => p.Id == incomingPenalization.PenalizationId);
                         if (rulesPenalization == null) throw new ArgumentOutOfRangeException("Unknown Penalization.Id " + incomingPenalization.PenalizationId);
-                        var finalPenalization = rulesPenalization.BuildPenalization(incomingPenalization.RuleInput ?? 0, finalResult);
+                        var finalPenalization = rulesPenalization.BuildPenalization(incomingPenalization.RuleInput ?? 0, finalResult.Performance);
                         if (finalPenalization != null)
                         {
                             finalResult.Penalizations.Add(finalPenalization);
@@ -226,7 +226,7 @@ namespace FreediveComp.Api
                 VerifyResult(rules.HasDuration, rules.HasDuration && didFinish, incomingResult.Performance.DurationSeconds(), "Performance.Duration");
                 VerifyResult(rules.HasDistance, rules.HasDistance && didFinish, incomingResult.Performance.Distance, "Performance.Distance");
                 finalResult.Performance = ExtractPerformance(incomingResult.Performance);
-                if (!rules.CanConvertToPoints) finalResult.Performance.Points = null;
+                if (!rules.HasPoints) finalResult.Performance.Points = null;
                 else finalResult.Performance.Points = rules.GetPoints(incomingResult.Performance);
 
                 var shortPenalization = rules.BuildShortPenalization(announcement.Performance, finalResult.Performance);

@@ -233,4 +233,52 @@ namespace FreediveComp.Api
         public DateTimeOffset? Start { get; set; }
         public DateTimeOffset? End { get; set; }
     }
+
+    public class RulesDto
+    {
+        public string Name { get; set; }
+        public bool HasDuration { get; set; }
+        public bool HasDistance { get; set; }
+        public bool HasDepth { get; set; }
+        public bool HasPoints { get; set; }
+        public string PrimaryComponent { get; set; }
+        public string PenalizationsTarget { get; set; }
+        public List<RulesPenalizationDto> Penalizations { get; set; }
+        public CalculationDto PointsCalculation { get; set; }
+        public CalculationDto ShortCalculation { get; set; }
+    }
+
+    public class RulesPenalizationDto
+    {
+        public string Id { get; set; }
+        public string Reason { get; set; }
+        public string ShortReason { get; set; }
+        public bool HasInput { get; set; }
+        public string InputName { get; set; }
+        public string InputUnit { get; set; }
+        public string CardResult { get; set; }
+        public CalculationDto Calculation { get; set; }
+    }
+
+    public class CalculationDto
+    {
+        public string Operation { get; set; }
+        public double? Constant { get; set; }
+        public string Variable { get; set; }
+        public CalculationDto ArgumentA { get; set; }
+        public CalculationDto ArgumentB { get; set; }
+    }
+
+    public class GetShortPenalizationRequest
+    {
+        public PerformanceDto Announced { get; set; }
+        public PerformanceDto Realized { get; set; }
+    }
+
+    public class GetCalculatedPenalizationRequest
+    {
+        public string PenalizationId { get; set; }
+        public double Input { get; set; }
+        public PerformanceDto Realized { get; set; }
+    }
 }

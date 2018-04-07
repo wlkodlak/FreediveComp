@@ -65,6 +65,8 @@ namespace FreediveComp.Models
             this.argument = argument;
         }
 
+        public ICalculation Argument => argument;
+
         public double? Evaluate(ICalculationVariables variables)
         {
             var value = argument.Evaluate(variables);
@@ -83,6 +85,23 @@ namespace FreediveComp.Models
             this.a = a;
             this.b = b;
         }
+
+        public string Operation
+        {
+            get
+            {
+                switch (operation)
+                {
+                    case '+': return "Plus";
+                    case '-': return "Minus";
+                    case '*': return "Multiply";
+                    case '/': return "Divide";
+                    default: return null;
+                }
+            }
+        }
+        public ICalculation ArgumentA => a;
+        public ICalculation ArgumentB => b;
 
         public double? Evaluate(ICalculationVariables variables)
         {
@@ -109,6 +128,8 @@ namespace FreediveComp.Models
             this.value = value;
         }
 
+        public double Value => value;
+
         public double? Evaluate(ICalculationVariables variables)
         {
             return value;
@@ -123,6 +144,8 @@ namespace FreediveComp.Models
         {
             this.name = name;
         }
+
+        public string Name => name;
 
         public double? Evaluate(ICalculationVariables variables)
         {

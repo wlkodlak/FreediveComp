@@ -60,7 +60,7 @@ namespace FreediveComp.Models
         bool HasDuration { get; }
         bool HasDistance { get; }
         bool HasDepth { get; }
-        bool CanConvertToPoints { get; }
+        bool HasPoints { get; }
         PerformanceComponent PrimaryComponent { get; }
         PerformanceComponent PenalizationsTarget { get; }
         ICalculation PointsCalculation { get; }
@@ -80,9 +80,8 @@ namespace FreediveComp.Models
         string InputName { get; }
         string InputUnit { get; }
         CardResult CardResult { get; }
-        Penalization BuildPenalization(double input, ActualResult result);
+        Penalization BuildPenalization(double input, Performance result);
         ICalculation PenaltyCalculation { get; }
-        PerformanceComponent PenalizationTarget { get; }
     }
 
     public interface IPerformance
@@ -249,7 +248,7 @@ namespace FreediveComp.Models
 
         public bool HasDepth => false;
 
-        public bool CanConvertToPoints => true;
+        public bool HasPoints => true;
 
         public IEnumerable<IRulesPenalization> Penalizations => new IRulesPenalization[] {
             AidaPenalization.EarlyStart,
@@ -294,7 +293,7 @@ namespace FreediveComp.Models
 
         public bool HasDepth => false;
 
-        public bool CanConvertToPoints => true;
+        public bool HasPoints => true;
 
         public IEnumerable<IRulesPenalization> Penalizations => new IRulesPenalization[] {
             AidaPenalization.EarlyStart,
@@ -342,7 +341,7 @@ namespace FreediveComp.Models
 
         public bool HasDepth => true;
 
-        public bool CanConvertToPoints => true;
+        public bool HasPoints => true;
 
         public IEnumerable<IRulesPenalization> Penalizations => new IRulesPenalization[] {
             AidaPenalization.EarlyStart,
@@ -450,9 +449,7 @@ namespace FreediveComp.Models
 
         public ICalculation PenaltyCalculation => penaltyCalculation;
 
-        public PerformanceComponent PenalizationTarget => PerformanceComponent.Points;
-
-        public Penalization BuildPenalization(double input, ActualResult result)
+        public Penalization BuildPenalization(double input, Performance result)
         {
             return new Penalization
             {
@@ -462,7 +459,7 @@ namespace FreediveComp.Models
                 RuleInput = inputName == null ? null : (double?)input,
                 Performance = new Performance
                 {
-                    Points = penaltyCalculation.Evaluate(new CalculationVariables(input, null, result.Performance))
+                    Points = penaltyCalculation.Evaluate(new CalculationVariables(input, null, result))
                 }
             };
         }
@@ -478,7 +475,7 @@ namespace FreediveComp.Models
 
         public bool HasDepth => false;
 
-        public bool CanConvertToPoints => false;
+        public bool HasPoints => false;
 
         public IEnumerable<IRulesPenalization> Penalizations => new IRulesPenalization[] {
             CmasPenalization.Blackout,
@@ -519,7 +516,7 @@ namespace FreediveComp.Models
 
         public bool HasDepth => false;
 
-        public bool CanConvertToPoints => false;
+        public bool HasPoints => false;
 
         public IEnumerable<IRulesPenalization> Penalizations => new IRulesPenalization[] {
             CmasPenalization.Blackout,
@@ -561,7 +558,7 @@ namespace FreediveComp.Models
 
         public bool HasDepth => true;
 
-        public bool CanConvertToPoints => false;
+        public bool HasPoints => false;
 
         public IEnumerable<IRulesPenalization> Penalizations => new IRulesPenalization[] {
             CmasPenalization.Blackout,
@@ -605,7 +602,7 @@ namespace FreediveComp.Models
 
         public bool HasDepth => false;
 
-        public bool CanConvertToPoints => false;
+        public bool HasPoints => false;
 
         public IEnumerable<IRulesPenalization> Penalizations => new IRulesPenalization[] {
             CmasPenalization.Blackout,
@@ -699,9 +696,7 @@ namespace FreediveComp.Models
 
         public ICalculation PenaltyCalculation => calculation;
 
-        public PerformanceComponent PenalizationTarget => component;
-
-        public Penalization BuildPenalization(double input, ActualResult result)
+        public Penalization BuildPenalization(double input, Performance result)
         {
             Penalization penalization = new Penalization
             {
@@ -714,7 +709,7 @@ namespace FreediveComp.Models
             };
             if (calculation != null)
             {
-                component.Modify(penalization.Performance, calculation.Evaluate(new CalculationVariables(input, null, result.Performance)));
+                component.Modify(penalization.Performance, calculation.Evaluate(new CalculationVariables(input, null, result)));
             }
             return penalization;
         }
@@ -732,7 +727,7 @@ namespace FreediveComp.Models
 
         public bool HasDepth => true;
 
-        public bool CanConvertToPoints => false;
+        public bool HasPoints => false;
 
         public IEnumerable<IRulesPenalization> Penalizations => new IRulesPenalization[0];
 
