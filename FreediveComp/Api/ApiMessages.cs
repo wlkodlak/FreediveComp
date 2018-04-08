@@ -18,6 +18,15 @@ namespace FreediveComp.Api
         public ReportActualResult CurrentResult { get; set; }
     }
 
+    public class StartingListEntryDto
+    {
+        public string AthleteId { get; set; }
+        public string DisciplineId { get; set; }
+        public string StartingLaneId { get; set; }
+        public DateTimeOffset? WarmUpTime { get; set; }
+        public DateTimeOffset OfficialTop { get; set; }
+    }
+
     public class AthleteProfile
     {
         public string AthleteId { get; set; }

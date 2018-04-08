@@ -7,8 +7,8 @@ namespace FreediveComp.Api
 {
     public interface IApiStartingList
     {
-        List<StartingListEntry> GetStartingList(string raceId, string startingLaneId);
-        void SetupStartingList(string raceId, string startingLaneId, List<StartingListEntry> startingList);
+        List<StartingListEntryDto> GetStartingList(string raceId, string startingLaneId);
+        void SetupStartingList(string raceId, string startingLaneId, List<StartingListEntryDto> startingList);
     }
 
     public class ApiStartingList : IApiStartingList
@@ -22,7 +22,7 @@ namespace FreediveComp.Api
             this.flattener = new StartingLanesFlatBuilder();
         }
 
-        public List<StartingListEntry> GetStartingList(string raceId, string startingLaneId)
+        public List<StartingListEntryDto> GetStartingList(string raceId, string startingLaneId)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
 
@@ -30,11 +30,23 @@ namespace FreediveComp.Api
             var rootStartingLanes = repositorySet.StartingLanes.GetStartingLanes();
             var allowedStartingLanes = new HashSet<string>(flattener.GetLeaves(rootStartingLanes, startingLaneId).Select(l => l.StartingLaneId));
             var startingList = repositorySet.StartingList.GetStartingList();
-            var dtos = startingList.Where(e => allowedStartingLanes.Contains(e.StartingLaneId)).ToList();
+            var dtos = startingList.Where(e => allowedStartingLanes.Contains(e.StartingLaneId)).Select(BuildStartingList).ToList();
             return dtos;
         }
 
-        public void SetupStartingList(string raceId, string startingLaneId, List<StartingListEntry> entries)
+        private StartingListEntryDto BuildStartingList(StartingListEntry model)
+        {
+            return new StartingListEntryDto
+            {
+                AthleteId = model.AthleteId,
+                DisciplineId = model.DisciplineId,
+                StartingLaneId = model.StartingLaneId,
+                OfficialTop = model.OfficialTop,
+                WarmUpTime = model.WarmUpTime,
+            };
+        }
+
+        public void SetupStartingList(string raceId, string startingLaneId, List<StartingListEntryDto> dtos)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(startingLaneId)) throw new ArgumentNullException("Missing StartingLaneId");
@@ -45,15 +57,24 @@ namespace FreediveComp.Api
             var allowedDisciplines = new HashSet<string>(repositorySet.Disciplines.GetDisciplines().Select(d => d.DisciplineId));
             var allowedAthletes = new HashSet<string>(repositorySet.Athletes.GetAthletes().Select(a => a.AthleteId));
 
-            foreach (var entry in entries)
+            var entries = new List<StartingListEntry>();
+            foreach (var dto in dtos)
             {
-                if (string.IsNullOrEmpty(entry.AthleteId)) throw new ArgumentNullException("Missing Entry.AthleteId");
-                if (string.IsNullOrEmpty(entry.StartingLaneId)) throw new ArgumentNullException("Missing Entry.StartingLaneId");
-                if (string.IsNullOrEmpty(entry.DisciplineId)) throw new ArgumentNullException("Missing Entry.DisciplineId");
-                if (entry.OfficialTop == DateTimeOffset.MinValue) throw new ArgumentNullException("Missing Entry.OfficialTop");
-                if (!allowedAthletes.Contains(entry.AthleteId)) throw new ArgumentOutOfRangeException("Unknown Entry.AthleteId " + entry.AthleteId);
-                if (!allowedStartingLanes.Contains(entry.StartingLaneId)) throw new ArgumentOutOfRangeException("Unknown Entry.StartingLaneId " + entry.StartingLaneId);
-                if (!allowedDisciplines.Contains(entry.DisciplineId)) throw new ArgumentOutOfRangeException("Unknown Entry.DisciplineId " + entry.DisciplineId);
+                if (string.IsNullOrEmpty(dto.AthleteId)) throw new ArgumentNullException("Missing Entry.AthleteId");
+                if (string.IsNullOrEmpty(dto.StartingLaneId)) throw new ArgumentNullException("Missing Entry.StartingLaneId");
+                if (string.IsNullOrEmpty(dto.DisciplineId)) throw new ArgumentNullException("Missing Entry.DisciplineId");
+                if (dto.OfficialTop == DateTimeOffset.MinValue) throw new ArgumentNullException("Missing Entry.OfficialTop");
+                if (!allowedAthletes.Contains(dto.AthleteId)) throw new ArgumentOutOfRangeException("Unknown Entry.AthleteId " + dto.AthleteId);
+                if (!allowedStartingLanes.Contains(dto.StartingLaneId)) throw new ArgumentOutOfRangeException("Unknown Entry.StartingLaneId " + dto.StartingLaneId);
+                if (!allowedDisciplines.Contains(dto.DisciplineId)) throw new ArgumentOutOfRangeException("Unknown Entry.DisciplineId " + dto.DisciplineId);
+                entries.Add(new StartingListEntry
+                {
+                    AthleteId = dto.AthleteId,
+                    DisciplineId = dto.DisciplineId,
+                    StartingLaneId = dto.StartingLaneId,
+                    OfficialTop = dto.OfficialTop,
+                    WarmUpTime = dto.WarmUpTime,
+                });
             }
 
             var fullList = repositorySet.StartingList.GetStartingList();
