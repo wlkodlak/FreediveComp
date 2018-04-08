@@ -95,7 +95,7 @@ namespace FreediveComp.Api
                 judgesRepository.SaveJudge(judge);
             }
 
-            judgesDevice.AuthenticationToken = GenerateAuthenticationToken();
+            judgesDevice.AuthenticationToken = AuthenticationToken.Generate(raceId, judge.JudgeId).ToString();
             judgesRepository.SaveJudgeDevice(judgesDevice);
 
             JudgeDto judgeDto = new JudgeDto();
@@ -107,11 +107,6 @@ namespace FreediveComp.Api
                 judgeDto.DeviceIds.Add(judgeDevice.DeviceId);
             }
             return judgeDto;
-        }
-
-        private string GenerateAuthenticationToken()
-        {
-            return Guid.NewGuid().ToString();
         }
 
         public List<JudgeDto> GetJudges(string raceId)

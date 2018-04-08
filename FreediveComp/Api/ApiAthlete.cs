@@ -9,7 +9,7 @@ namespace FreediveComp.Api
     {
         AthleteDto GetAthlete(string raceId, string athleteId);
         void PostAthlete(string raceId, string athleteId, AthleteDto athlete);
-        void PostAthleteResult(string raceId, string athleteId, string authenticationToken, ActualResultDto result);
+        void PostAthleteResult(string raceId, string athleteId, Judge authenticatedJudge, ActualResultDto result);
     }
 
     public class ApiAthlete : IApiAthlete
@@ -162,25 +162,23 @@ namespace FreediveComp.Api
             };
         }
 
-        public void PostAthleteResult(string raceId, string athleteId, string authenticationToken, ActualResultDto incomingResult)
+        public void PostAthleteResult(string raceId, string athleteId, Judge authenticatedJudge, ActualResultDto incomingResult)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(athleteId)) throw new ArgumentNullException("Missing AthleteId");
-            if (string.IsNullOrEmpty(authenticationToken)) throw new ArgumentNullException("Missing AuthenticationToken");
+            if (authenticatedJudge == null) throw new ArgumentNullException("Missing AuthenticationToken");
             if (string.IsNullOrEmpty(incomingResult.DisciplineId)) throw new ArgumentNullException("Missing DisciplineId");
 
             var repositorySet = repositorySetProvider.GetRepositorySet(raceId);
             var athlete = repositorySet.Athletes.FindAthlete(athleteId);
             if (athlete == null) throw new ArgumentOutOfRangeException("Unknown AthleteId " + athleteId);
-            var judge = repositorySet.Judges.AuthenticateJudge(authenticationToken);
-            if (judge == null) throw new ArgumentOutOfRangeException("Wrong AuthenticationToken");
             var discipline = repositorySet.Disciplines.FindDiscipline(incomingResult.DisciplineId);
             if (discipline == null) throw new ArgumentOutOfRangeException("Wrong DisciplineId " + incomingResult.DisciplineId);
             var rules = rulesRepository.Get(discipline.Rules);
 
             ActualResult finalResult = new ActualResult();
             finalResult.DisciplineId = discipline.DisciplineId;
-            finalResult.JudgeId = judge.JudgeId;
+            finalResult.JudgeId = authenticatedJudge.JudgeId;
             finalResult.Penalizations = new List<Penalization>();
             finalResult.CardResult = CardResult.Parse(incomingResult.CardResult);
 

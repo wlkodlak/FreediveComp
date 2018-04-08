@@ -226,6 +226,7 @@ namespace FreediveComp.Models
     {
         public string JudgeId { get; set; }
         public string Name { get; set; }
+        public bool IsAdmin { get; set; }
     }
 
     public class JudgeDevice

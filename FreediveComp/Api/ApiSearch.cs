@@ -15,6 +15,12 @@ namespace FreediveComp.Api
         private readonly SearchTokenizer tokenizer;
         private readonly IRacesIndexRepository racesIndexRepository;
 
+        public ApiSearch(SearchTokenizer tokenizer, IRacesIndexRepository racesIndexRepository)
+        {
+            this.tokenizer = tokenizer;
+            this.racesIndexRepository = racesIndexRepository;
+        }
+
         public List<RaceSearchResultDto> GetSearch(string query, DateTimeOffset? date)
         {
             var tokens = tokenizer.GetTokens(query);

@@ -290,7 +290,7 @@ namespace FreediveComp.Models
         }
     }
 
-    public class RacesIndexRepository : IRacesIndexRepository
+    public class RacesIndexMemoryRepository : IRacesIndexRepository
     {
         private Dictionary<string, RaceIndexEntry> entries = new Dictionary<string, RaceIndexEntry>();
 

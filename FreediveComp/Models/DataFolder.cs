@@ -83,6 +83,8 @@ namespace FreediveComp.Models
 
     public class DataFolderReal : IDataFolder
     {
+        public static string GetUserDataFolder => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/FreediveComp";
+        public static string GetWebDataFolder => AppDomain.CurrentDomain.BaseDirectory + "/FreediveComp";
         private DirectoryInfo folder;
 
         public DataFolderReal(string folder)
