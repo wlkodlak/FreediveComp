@@ -9,7 +9,10 @@ namespace FreediveComp
     {
         public static void Configure(IAppBuilder app)
         {
-            var container = DependencyInjection.Initialize();
+            var dependencyInjection = new DependencyInjection();
+            dependencyInjection.PersistenceKind = AppConfiguration.PersistenceKind;
+            dependencyInjection.PersistencePath = AppConfiguration.PersistencePath;
+            var container = dependencyInjection.BuildContainer();
 
             HttpConfiguration config = new HttpConfiguration();
             config.SuppressDefaultHostAuthentication();
