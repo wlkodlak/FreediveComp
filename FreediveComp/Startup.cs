@@ -1,17 +1,17 @@
-﻿using FreediveComp.Controllers;
+﻿using MilanWilczak.FreediveComp.Controllers;
 using Owin;
 using System.Web.Http;
 using Unity;
 
-namespace FreediveComp
+namespace MilanWilczak.FreediveComp
 {
     public class Startup
     {
         public static void Configure(IAppBuilder app)
         {
             var dependencyInjection = new DependencyInjection();
-            dependencyInjection.PersistenceKind = AppConfiguration.PersistenceKind;
-            dependencyInjection.PersistencePath = AppConfiguration.PersistencePath;
+            dependencyInjection.PersistenceKind = AppConfiguration.GetPersistenceKind();
+            dependencyInjection.PersistencePath = AppConfiguration.GetPersistencePath();
             var container = dependencyInjection.BuildContainer();
 
             HttpConfiguration config = new HttpConfiguration();

@@ -1,12 +1,14 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading;
 
-namespace FreediveComp.Models
+namespace MilanWilczak.FreediveComp.Models
 {
-    public class StartingListJsonRepository : IStartingListRepository
+    public class StartingListJsonRepository : IStartingListRepository, IDisposable
     {
         private IDataFolder dataFolder;
         private ReaderWriterLockSlim mutex;
@@ -20,6 +22,20 @@ namespace FreediveComp.Models
             this.serializer = JsonSerializer.Create();
         }
 
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                mutex.Dispose();
+            }
+        }
+
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         public List<StartingListEntry> GetStartingList()
         {
             try
@@ -57,6 +73,7 @@ namespace FreediveComp.Models
             }
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         public void SaveStartingList(List<StartingListEntry> startingList)
         {
             try

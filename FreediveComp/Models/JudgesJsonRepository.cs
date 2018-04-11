@@ -5,10 +5,11 @@ using System.Threading;
 using System.IO;
 using Newtonsoft.Json;
 using System.Text;
+using System.Diagnostics.CodeAnalysis;
 
-namespace FreediveComp.Models
+namespace MilanWilczak.FreediveComp.Models
 {
-    public class JudgesJsonRepository : IJudgesRepository
+    public class JudgesJsonRepository : IJudgesRepository, IDisposable
     {
         private IDataFolder dataFolder;
         private bool isLoaded;
@@ -29,6 +30,19 @@ namespace FreediveComp.Models
             this.devicesByConnectCode = new Dictionary<string, JudgeDevice>();
             this.authenticationMap = new Dictionary<string, string>();
             this.serializer = JsonSerializer.Create();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                mutex.Dispose();
+            }
         }
 
         public Judge AuthenticateJudge(string authenticationToken)
@@ -124,6 +138,7 @@ namespace FreediveComp.Models
             }
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         private void EnsureDataLoaded()
         {
             if (isLoaded) return;
@@ -164,6 +179,7 @@ namespace FreediveComp.Models
             }
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         private void SaveData()
         {
             JudgesData data = new JudgesData();

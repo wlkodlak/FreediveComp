@@ -4,10 +4,10 @@ using System.Web.Http.Dependencies;
 using System.Configuration;
 using Unity;
 using Unity.Exceptions;
-using FreediveComp.Api;
-using FreediveComp.Models;
+using MilanWilczak.FreediveComp.Api;
+using MilanWilczak.FreediveComp.Models;
 
-namespace FreediveComp
+namespace MilanWilczak.FreediveComp
 {
     public class DependencyInjection
     {
@@ -64,7 +64,16 @@ namespace FreediveComp
 
         public void Dispose()
         {
-            unity.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                unity.Dispose();
+            }
         }
 
         public object GetService(Type serviceType)
@@ -101,41 +110,44 @@ namespace FreediveComp
 
     public class AppConfiguration
     {
-        public static PeristenceKind PersistenceKind
+        public static PeristenceKind GetPersistenceKind()
         {
-            get
-            {
-                string kind = ConfigurationManager.AppSettings["persistence:kind"];
-                if (string.IsNullOrEmpty(kind)) return PeristenceKind.RealFolder;
-                if (string.Equals(kind, "Folder", StringComparison.InvariantCultureIgnoreCase)) return PeristenceKind.RealFolder;
-                if (string.Equals(kind, "RealFolder", StringComparison.InvariantCultureIgnoreCase)) return PeristenceKind.RealFolder;
-                if (string.Equals(kind, "VirtualFolder", StringComparison.InvariantCultureIgnoreCase)) return PeristenceKind.VirtualFolder;
-                if (string.Equals(kind, "Virtual", StringComparison.InvariantCultureIgnoreCase)) return PeristenceKind.VirtualFolder;
-                if (string.Equals(kind, "Memory", StringComparison.InvariantCultureIgnoreCase)) return PeristenceKind.InMemory;
-                if (string.Equals(kind, "InMemory", StringComparison.InvariantCultureIgnoreCase)) return PeristenceKind.InMemory;
-                throw new ArgumentOutOfRangeException("Illegal persistence kind " + kind);
-            }
+            string kind = ConfigurationManager.AppSettings["persistence:kind"];
+            if (string.IsNullOrEmpty(kind)) return PeristenceKind.RealFolder;
+            if (string.Equals(kind, "Folder", StringComparison.InvariantCultureIgnoreCase)) return PeristenceKind.RealFolder;
+            if (string.Equals(kind, "RealFolder", StringComparison.InvariantCultureIgnoreCase)) return PeristenceKind.RealFolder;
+            if (string.Equals(kind, "VirtualFolder", StringComparison.InvariantCultureIgnoreCase)) return PeristenceKind.VirtualFolder;
+            if (string.Equals(kind, "Virtual", StringComparison.InvariantCultureIgnoreCase)) return PeristenceKind.VirtualFolder;
+            if (string.Equals(kind, "Memory", StringComparison.InvariantCultureIgnoreCase)) return PeristenceKind.InMemory;
+            if (string.Equals(kind, "InMemory", StringComparison.InvariantCultureIgnoreCase)) return PeristenceKind.InMemory;
+            throw new ConfigurationErrorsException("Illegal persistence kind " + kind);
         }
 
-        public static string PersistencePath
+        public static string GetPersistencePath()
         {
-            get
+            string path = ConfigurationManager.AppSettings["persistence:path"];
+            if (string.IsNullOrEmpty(path))
             {
-                string path = ConfigurationManager.AppSettings["persistence:path"];
-                if (string.IsNullOrEmpty(path))
-                {
-                    path = IsWebBased ? "%BASEFOLDER%/App_Data" : "%APPDATA%/FreediveComp";
-                }
-                if (path.Contains("%APPDATA%")) path = path.Replace("%APPDATA%", AppDataFolder);
-                if (path.Contains("%BASEFOLDER%")) path = path.Replace("%BASEFOLDER%", AppDomainFolder);
-                return path;
+                path = IsWebBased() ? "%BASEFOLDER%/App_Data" : "%APPDATA%/MilanWilczak.FreediveComp";
             }
+            if (path.Contains("%APPDATA%")) path = path.Replace("%APPDATA%", ResolveAppDataFolder());
+            if (path.Contains("%BASEFOLDER%")) path = path.Replace("%BASEFOLDER%", ResolveAppDomainFolder());
+            return path;
         }
 
-        private static bool IsWebBased => true;
+        private static bool IsWebBased()
+        {
+            return true;
+        }
 
-        private static string AppDataFolder => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        private static string ResolveAppDataFolder()
+        {
+            return Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        }
 
-        private static string AppDomainFolder => AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+        private static string ResolveAppDomainFolder()
+        {
+            return AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+        }
     }
 }

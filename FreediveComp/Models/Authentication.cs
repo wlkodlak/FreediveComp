@@ -2,7 +2,7 @@
 using System.Security.Principal;
 using System.Text;
 
-namespace FreediveComp.Models
+namespace MilanWilczak.FreediveComp.Models
 {
     public class AuthenticationToken
     {

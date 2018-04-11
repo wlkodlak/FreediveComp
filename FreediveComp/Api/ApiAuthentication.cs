@@ -1,10 +1,10 @@
-﻿using FreediveComp.Models;
+﻿using MilanWilczak.FreediveComp.Models;
 using System;
 using System.Collections.Generic;
 
-using ModelJudge = FreediveComp.Models.Judge;
+using ModelJudge = MilanWilczak.FreediveComp.Models.Judge;
 
-namespace FreediveComp.Api
+namespace MilanWilczak.FreediveComp.Api
 {
     public interface IApiAuthentication
     {

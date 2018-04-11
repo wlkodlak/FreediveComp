@@ -6,8 +6,9 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Threading;
 using System.Text;
+using System.Diagnostics.CodeAnalysis;
 
-namespace FreediveComp.Models
+namespace MilanWilczak.FreediveComp.Models
 {
     public class RaceJsonRepository : IRaceSettingsRepository, IStartingLanesRepository, IDisciplinesRepository, IResultsListsRepository, IDisposable
     {
@@ -22,6 +23,19 @@ namespace FreediveComp.Models
             this.mutex = new ReaderWriterLockSlim();
             this.serializer = JsonSerializer.Create();
             this.raceData = null;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                mutex.Dispose();
+            }
         }
 
         private TResult GetData<TResult>(Func<RaceData, TResult> reader)
@@ -62,6 +76,7 @@ namespace FreediveComp.Models
             }
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         private void EnsureDataLoaded()
         {
             if (raceData != null) return;
@@ -82,6 +97,7 @@ namespace FreediveComp.Models
 
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         private void SaveData()
         {
             try
@@ -106,10 +122,6 @@ namespace FreediveComp.Models
         public void ClearResultLists()
         {
             ChangeData(r => r.ResultsLists.Clear());
-        }
-
-        public void Dispose()
-        {
         }
 
         public Discipline FindDiscipline(string disciplineId)

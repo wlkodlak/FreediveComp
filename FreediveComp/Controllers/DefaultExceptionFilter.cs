@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http.Filters;
 
-namespace FreediveComp.Controllers
+namespace MilanWilczak.FreediveComp.Controllers
 {
     public class DefaultExceptionFilterAttribute : ExceptionFilterAttribute
     {

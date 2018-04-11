@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FreediveComp.Models
+namespace MilanWilczak.FreediveComp.Models
 {
     public class RaceSettingsMemoryRepository : IRaceSettingsRepository
     {

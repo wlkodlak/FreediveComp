@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Web;
 
-namespace FreediveComp.Models
+namespace MilanWilczak.FreediveComp.Models
 {
     public interface IDataFolder : IDisposable
     {
@@ -40,6 +40,11 @@ namespace FreediveComp.Models
         }
 
         public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        protected virtual void Dispose(bool disposing)
         {
         }
 
@@ -83,8 +88,8 @@ namespace FreediveComp.Models
 
     public class DataFolderReal : IDataFolder
     {
-        public static string GetUserDataFolder => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/FreediveComp";
-        public static string GetWebDataFolder => AppDomain.CurrentDomain.BaseDirectory + "/FreediveComp";
+        public static string GetUserDataFolder => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/MilanWilczak.FreediveComp";
+        public static string GetWebDataFolder => AppDomain.CurrentDomain.BaseDirectory + "/MilanWilczak.FreediveComp";
         private DirectoryInfo folder;
 
         public DataFolderReal(string folder)
@@ -134,6 +139,12 @@ namespace FreediveComp.Models
         }
 
         public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
         {
         }
 

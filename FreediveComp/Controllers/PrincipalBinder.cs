@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using System.Web.Http.Controllers;
 using System.Web.Http.Metadata;
 
-namespace FreediveComp.Controllers
+namespace MilanWilczak.FreediveComp.Controllers
 {
     public class PrincipalBinder : HttpParameterBinding
     {

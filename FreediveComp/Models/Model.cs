@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace FreediveComp.Models
+namespace MilanWilczak.FreediveComp.Models
 {
     public class Athlete
     {
@@ -68,6 +68,16 @@ namespace FreediveComp.Models
                 case "Female": return Female;
                 default: return Unspecified;
             }
+        }
+
+        public static bool operator ==(Sex a, Sex b)
+        {
+            return a.data == b.data;
+        }
+
+        public static bool operator !=(Sex a, Sex b)
+        {
+            return a.data != b.data;
         }
     }
 
@@ -373,6 +383,16 @@ namespace FreediveComp.Models
         public override int GetHashCode()
         {
             return value;
+        }
+
+        public static bool operator ==(PerformanceComponent a, PerformanceComponent b)
+        {
+            return a.value == b.value;
+        }
+
+        public static bool operator !=(PerformanceComponent a, PerformanceComponent b)
+        {
+            return a.value != b.value;
         }
 
         public override string ToString()

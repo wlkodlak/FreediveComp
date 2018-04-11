@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace FreediveComp.Api
+namespace MilanWilczak.FreediveComp.Api
 {
-    public class StartingListReport
+    public sealed class StartingListReport
     {
         public string Title { get; set; }
         public List<StartingListReportEntry> Entries { get; set; }
     }
 
-    public class StartingListReportEntry
+    public sealed class StartingListReportEntry
     {
         public AthleteProfile Athlete { get; set; }
         public ReportDiscipline Discipline { get; set; }
@@ -18,7 +18,7 @@ namespace FreediveComp.Api
         public ReportActualResult CurrentResult { get; set; }
     }
 
-    public class StartingListEntryDto
+    public sealed class StartingListEntryDto
     {
         public string AthleteId { get; set; }
         public string DisciplineId { get; set; }
@@ -27,7 +27,7 @@ namespace FreediveComp.Api
         public DateTimeOffset OfficialTop { get; set; }
     }
 
-    public class AthleteProfile
+    public sealed class AthleteProfile
     {
         public string AthleteId { get; set; }
         public string FirstName { get; set; }
@@ -40,19 +40,19 @@ namespace FreediveComp.Api
         public string ModeratorNotes { get; set; }
     }
 
-    public class ReportDiscipline
+    public sealed class ReportDiscipline
     {
         public string DisciplineId { get; set; }
         public string Name { get; set; }
     }
 
-    public class ReportAnnouncement
+    public sealed class ReportAnnouncement
     {
         public PerformanceDto Performance { get; set; }
         public string ModeratorNotes { get; set; }
     }
 
-    public class PerformanceDto : Models.IPerformance
+    public sealed class PerformanceDto : Models.IPerformance
     {
         public TimeSpan? Duration { get; set; }
         public double? Depth { get; set; }
@@ -60,7 +60,7 @@ namespace FreediveComp.Api
         public double? Points { get; set; }
     }
 
-    public class ReportStartTimes
+    public sealed class ReportStartTimes
     {
         public string StartingLaneId { get; set; }
         public string StartingLaneLongName { get; set; }
@@ -68,7 +68,7 @@ namespace FreediveComp.Api
         public DateTimeOffset OfficialTop { get; set; }
     }
 
-    public class ReportActualResult
+    public sealed class ReportActualResult
     {
         public PerformanceDto Performance { get; set; }
         public List<PenalizationDto> Penalizations { get; set; }
@@ -79,7 +79,7 @@ namespace FreediveComp.Api
         public string JudgeComment { get; set; }
     }
 
-    public class PenalizationDto
+    public sealed class PenalizationDto
     {
         public string Reason { get; set; }
         public string ShortReason { get; set; }
@@ -89,13 +89,13 @@ namespace FreediveComp.Api
         public double? RuleInput { get; set; }
     }
 
-    public class ResultsListReport
+    public sealed class ResultsListReport
     {
         public ResultsListMetadata Metadata { get; set; }
         public List<ResultsListReportEntry> Results { get; set; }
     }
 
-    public class ResultsListMetadata
+    public sealed class ResultsListMetadata
     {
         public string DisciplineId { get; set; }
         public string ResultsListId { get; set; }
@@ -103,20 +103,20 @@ namespace FreediveComp.Api
         public List<ResultsListColumnMetadata> Columns { get; set; }
     }
 
-    public class ResultsListColumnMetadata
+    public sealed class ResultsListColumnMetadata
     {
         public ReportDiscipline Discipline { get; set; }
         public string Title { get; set; }
         public bool IsSortingSource { get; set; }
     }
 
-    public class ResultsListReportEntry
+    public sealed class ResultsListReportEntry
     {
         public AthleteProfile Athlete { get; set; }
         public List<ResultsListReportEntrySubresult> Subresults { get; set; }
     }
 
-    public class ResultsListReportEntrySubresult : Models.ICombinedResult
+    public sealed class ResultsListReportEntrySubresult : Models.ICombinedResult
     {
         public ReportAnnouncement Announcement { get; set; }
         public ReportActualResult CurrentResult { get; set; }
@@ -127,7 +127,7 @@ namespace FreediveComp.Api
         Models.IPerformance Models.ICombinedResult.Final => CurrentResult?.FinalPerformance;
     }
 
-    public class RaceSetupDto
+    public sealed class RaceSetupDto
     {
         public RaceSettingsDto Race { get; set; }
         public List<StartingLaneDto> StartingLanes { get; set; }
@@ -135,7 +135,7 @@ namespace FreediveComp.Api
         public List<DisciplineDto> Disciplines { get; set; }
     }
 
-    public class RaceSettingsDto
+    public sealed class RaceSettingsDto
     {
         public string RaceId { get; set; }
         public string Name { get; set; }
@@ -143,35 +143,35 @@ namespace FreediveComp.Api
         public DateTimeOffset? End { get; set; }
     }
 
-    public class StartingLaneDto
+    public sealed class StartingLaneDto
     {
         public string StartingLaneId { get; set; }
         public string ShortName { get; set; }
         public List<StartingLaneDto> SubLanes { get; set; }
     }
 
-    public class ResultsListDto
+    public sealed class ResultsListDto
     {
         public string ResultsListId { get; set; }
         public string Title { get; set; }
         public List<ResultsColumnDto> Columns { get; set; }
     }
 
-    public class ResultsColumnDto
+    public sealed class ResultsColumnDto
     {
         public string Title { get; set; }
         public bool IsFinal { get; set; }
         public List<ResultsComponentDto> Components { get; set; }
     }
 
-    public class ResultsComponentDto
+    public sealed class ResultsComponentDto
     {
         public string DisciplineId { get; set; }
         public double? FinalPointsCoeficient { get; set; }
     }
 
 
-    public class DisciplineDto
+    public sealed class DisciplineDto
     {
         public string DisciplineId { get; set; }
         public string ShortName { get; set; }
@@ -180,21 +180,21 @@ namespace FreediveComp.Api
         public bool AnnouncementsClosed { get; set; }
     }
 
-    public class AthleteDto
+    public sealed class AthleteDto
     {
         public AthleteProfile Profile { get; set; }
         public List<AnnouncementDto> Announcements { get; set; }
         public List<ActualResultDto> Results { get; set; }
     }
 
-    public class AnnouncementDto
+    public sealed class AnnouncementDto
     {
         public string DisciplineId { get; set; }
         public PerformanceDto Performance { get; set; }
         public string ModeratorNotes { get; set; }
     }
 
-    public class ActualResultDto
+    public sealed class ActualResultDto
     {
         public string DisciplineId { get; set; }
         public PerformanceDto Performance { get; set; }
@@ -206,13 +206,13 @@ namespace FreediveComp.Api
         public bool JudgeOverride { get; set; }
     }
 
-    public class AuthenticateRequestDto
+    public sealed class AuthenticateRequestDto
     {
         public string DeviceId { get; set; }
         public string ConnectCode { get; set; }
     }
 
-    public class AuthenticateResponseDto
+    public sealed class AuthenticateResponseDto
     {
         public string DeviceId { get; set; }
         public string ConnectCode { get; set; }
@@ -221,21 +221,21 @@ namespace FreediveComp.Api
         public string JudgeName { get; set; }
     }
 
-    public class AuthorizeRequestDto
+    public sealed class AuthorizeRequestDto
     {
         public string ConnectCode { get; set; }
         public string JudgeId { get; set; }
         public string JudgeName { get; set; }
     }
 
-    public class JudgeDto
+    public sealed class JudgeDto
     {
         public string JudgeId { get; set; }
         public string JudgeName { get; set; }
         public List<string> DeviceIds { get; set; }
     }
 
-    public class RaceSearchResultDto
+    public sealed class RaceSearchResultDto
     {
         public string RaceId { get; set; }
         public string Name { get; set; }
@@ -243,7 +243,7 @@ namespace FreediveComp.Api
         public DateTimeOffset? End { get; set; }
     }
 
-    public class RulesDto
+    public sealed class RulesDto
     {
         public string Name { get; set; }
         public bool HasDuration { get; set; }
@@ -257,7 +257,7 @@ namespace FreediveComp.Api
         public CalculationDto ShortCalculation { get; set; }
     }
 
-    public class RulesPenalizationDto
+    public sealed class RulesPenalizationDto
     {
         public string Id { get; set; }
         public string Reason { get; set; }
@@ -269,7 +269,7 @@ namespace FreediveComp.Api
         public CalculationDto Calculation { get; set; }
     }
 
-    public class CalculationDto
+    public sealed class CalculationDto
     {
         public string Operation { get; set; }
         public double? Constant { get; set; }
@@ -278,13 +278,13 @@ namespace FreediveComp.Api
         public CalculationDto ArgumentB { get; set; }
     }
 
-    public class GetShortPenalizationRequest
+    public sealed class GetShortPenalizationRequest
     {
         public PerformanceDto Announced { get; set; }
         public PerformanceDto Realized { get; set; }
     }
 
-    public class GetCalculatedPenalizationRequest
+    public sealed class GetCalculatedPenalizationRequest
     {
         public string PenalizationId { get; set; }
         public double Input { get; set; }

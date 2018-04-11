@@ -1,4 +1,4 @@
-﻿using FreediveComp.Models;
+﻿using MilanWilczak.FreediveComp.Models;
 using System;
 using System.Linq;
 using System.Threading;
@@ -7,7 +7,7 @@ using System.Net.Http.Headers;
 using System.Web.Http.Filters;
 using System.Web.Http.Results;
 
-namespace FreediveComp.Controllers
+namespace MilanWilczak.FreediveComp.Controllers
 {
     public class TokenAuthenticationFilter : IAuthenticationFilter
     {

@@ -6,7 +6,7 @@ using System.Web.Http;
 using System.Web.Http.Controllers;
 using System.Web.Http.Metadata;
 
-namespace FreediveComp.Controllers
+namespace MilanWilczak.FreediveComp.Controllers
 {
     public class FromHeaderAttribute : ParameterBindingAttribute
     {

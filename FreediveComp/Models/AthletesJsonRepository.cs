@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using Newtonsoft.Json;
 
-namespace FreediveComp.Models
+namespace MilanWilczak.FreediveComp.Models
 {
     public class AthletesJsonRepository : IAthletesRepository, IDisposable
     {
@@ -29,7 +30,15 @@ namespace FreediveComp.Models
 
         public void Dispose()
         {
-            mutex.Dispose();
+            Dispose(true);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                mutex.Dispose();
+            }
         }
 
         public Athlete FindAthlete(string athleteId)
@@ -70,6 +79,7 @@ namespace FreediveComp.Models
             allAthletesIds = new HashSet<string>(dataFolder.GetFiles().Where(IsAthleteFileName).Select(ExtractAthleteId));
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         private Athlete LoadAthlete(string athleteId)
         {
             Athlete athlete;
@@ -153,6 +163,7 @@ namespace FreediveComp.Models
             }
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         public void SaveAthlete(Athlete athlete)
         {
             try

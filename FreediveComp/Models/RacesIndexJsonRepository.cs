@@ -5,10 +5,11 @@ using System.Threading;
 using Newtonsoft.Json;
 using System.IO;
 using System.Text;
+using System.Diagnostics.CodeAnalysis;
 
-namespace FreediveComp.Models
+namespace MilanWilczak.FreediveComp.Models
 {
-    public class RacesIndexJsonRepository : IRacesIndexRepository
+    public class RacesIndexJsonRepository : IRacesIndexRepository, IDisposable
     {
         private readonly IDataFolder dataFolder;
         private readonly ReaderWriterLockSlim mutex;
@@ -20,6 +21,19 @@ namespace FreediveComp.Models
             this.dataFolder = dataFolder;
             this.mutex = new ReaderWriterLockSlim();
             this.serializer = JsonSerializer.Create();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                mutex.Dispose();
+            }
         }
 
         public List<RaceIndexEntry> Search(HashSet<string> search, DateTimeOffset? date)
@@ -98,6 +112,7 @@ namespace FreediveComp.Models
             }
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         private void EnsureDataLoaded()
         {
             if (entries != null) return;
@@ -117,6 +132,7 @@ namespace FreediveComp.Models
             }
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         private void SaveData()
         {
             try

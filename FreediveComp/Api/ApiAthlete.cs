@@ -1,9 +1,9 @@
-﻿using FreediveComp.Models;
+﻿using MilanWilczak.FreediveComp.Models;
 using System;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace FreediveComp.Api
+namespace MilanWilczak.FreediveComp.Api
 {
     public interface IApiAthlete
     {

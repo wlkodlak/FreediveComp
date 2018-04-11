@@ -1,11 +1,11 @@
-﻿using FreediveComp.Api;
-using FreediveComp.Models;
+﻿using MilanWilczak.FreediveComp.Api;
+using MilanWilczak.FreediveComp.Models;
 using System;
 using System.Collections.Generic;
 using System.Security.Principal;
 using System.Web.Http;
 
-namespace FreediveComp.Controllers
+namespace MilanWilczak.FreediveComp.Controllers
 {
     [DefaultExceptionFilter]
     public class DefaultController : ApiController

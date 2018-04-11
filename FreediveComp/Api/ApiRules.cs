@@ -1,9 +1,9 @@
-﻿using FreediveComp.Models;
+﻿using MilanWilczak.FreediveComp.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FreediveComp.Api
+namespace MilanWilczak.FreediveComp.Api
 {
     public interface IApiRules
     {

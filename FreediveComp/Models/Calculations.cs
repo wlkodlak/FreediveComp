@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FreediveComp.Models
+namespace MilanWilczak.FreediveComp.Models
 {
     public interface ICalculation
     {
