@@ -63,6 +63,7 @@
     <Compile Include="Models\CalculationsTest.cs" />
     <Compile Include="Models\JudgePrincipalTest.cs" />
     <Compile Include="Models\SearchTokenizerTest.cs" />
+    <Compile Include="Models\StartingLanesFlatBuilderTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
