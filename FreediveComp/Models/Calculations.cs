@@ -10,9 +10,9 @@ namespace MilanWilczak.FreediveComp.Models
     public static class Calculation
     {
         public static ICalculation Ceiling(ICalculation argument) => new CalculationCeiling(argument);
-        public static ICalculation Multiply(ICalculation a, ICalculation b) => new CalculationOperator('*', a, b);
         public static ICalculation Plus(ICalculation a, ICalculation b) => new CalculationOperator('+', a, b);
         public static ICalculation Minus(ICalculation a, ICalculation b) => new CalculationOperator('-', a, b);
+        public static ICalculation Multiply(ICalculation a, ICalculation b) => new CalculationOperator('*', a, b);
         public static ICalculation Divide(ICalculation a, ICalculation b) => new CalculationOperator('/', a, b);
         public static ICalculation Constant(double value) => new CalculationConstant(value);
         public static ICalculation Input => new CalculationVariable("Input");
@@ -111,9 +111,9 @@ namespace MilanWilczak.FreediveComp.Models
             switch (operation)
             {
                 case '+': return valueA.Value + valueB.Value;
-                case '-': return valueA.Value + valueB.Value;
-                case '*': return valueA.Value + valueB.Value;
-                case '/': return valueA.Value + valueB.Value;
+                case '-': return valueA.Value - valueB.Value;
+                case '*': return valueA.Value * valueB.Value;
+                case '/': return valueA.Value / valueB.Value;
                 default: return valueA;
             }
         }

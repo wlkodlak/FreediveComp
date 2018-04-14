@@ -59,12 +59,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="NunitInstallationTest.cs" />
+    <Compile Include="AuthenticationTokenTest.cs" />
+    <Compile Include="CalculationsTest.cs" />
+    <Compile Include="JudgePrincipalTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FreediveComp\FreediveComp.csproj">
+      <Project>{6FDBCCA5-C728-4A1C-A8F1-2D42796EB978}</Project>
+      <Name>FreediveComp</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
