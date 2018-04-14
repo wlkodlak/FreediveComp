@@ -14,12 +14,12 @@ namespace MilanWilczak.FreediveComp.Api
     public class ApiStartingList : IApiStartingList
     {
         private readonly IRepositorySetProvider repositorySetProvider;
-        private readonly StartingLanesFlatBuilder flattener;
+        private readonly IStartingLanesFlatBuilder flattener;
 
-        public ApiStartingList(IRepositorySetProvider repositorySetProvider)
+        public ApiStartingList(IRepositorySetProvider repositorySetProvider, IStartingLanesFlatBuilder flattener)
         {
             this.repositorySetProvider = repositorySetProvider;
-            this.flattener = new StartingLanesFlatBuilder();
+            this.flattener = flattener;
         }
 
         public List<StartingListEntryDto> GetStartingList(string raceId, string startingLaneId)

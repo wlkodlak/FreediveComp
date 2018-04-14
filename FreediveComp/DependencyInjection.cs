@@ -24,6 +24,7 @@ namespace MilanWilczak.FreediveComp
             container.RegisterType<IApiSearch, ApiSearch>();
             container.RegisterType<IApiSetup, ApiSetup>();
             container.RegisterType<IApiStartingList, ApiStartingList>();
+            container.RegisterType<IStartingLanesFlatBuilder, StartingLanesFlatBuilder>();
 
             if (PersistenceKind == PeristenceKind.InMemory)
             {

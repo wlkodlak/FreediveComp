@@ -1,7 +1,7 @@
 ﻿using MilanWilczak.FreediveComp.Models;
 using NUnit.Framework;
 
-namespace MilanWilczak.FreediveComp.Tests
+namespace MilanWilczak.FreediveComp.Tests.Models
 {
     [TestFixture]
     public class JudgePrincipalTest

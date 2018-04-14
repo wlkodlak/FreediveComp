@@ -37,6 +37,12 @@ namespace MilanWilczak.FreediveComp.Models
                 case UnicodeCategory.SpaceSeparator:
                 case UnicodeCategory.LineSeparator:
                 case UnicodeCategory.ParagraphSeparator:
+                case UnicodeCategory.OpenPunctuation:
+                case UnicodeCategory.ClosePunctuation:
+                case UnicodeCategory.InitialQuotePunctuation:
+                case UnicodeCategory.FinalQuotePunctuation:
+                case UnicodeCategory.DashPunctuation:
+                case UnicodeCategory.OtherPunctuation:
                     return true;
                 default:
                     return false;
