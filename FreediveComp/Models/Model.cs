@@ -349,11 +349,11 @@ namespace MilanWilczak.FreediveComp.Models
         public static readonly PerformanceComponent Duration = new PerformanceComponent(3);
         public static readonly PerformanceComponent Points = new PerformanceComponent(4);
 
-        private readonly int value;
+        private readonly int data;
 
         private PerformanceComponent(int value)
         {
-            this.value = value;
+            this.data = value;
         }
 
         public static PerformanceComponent Parse(string input)
@@ -372,7 +372,7 @@ namespace MilanWilczak.FreediveComp.Models
         {
             if (obj is PerformanceComponent oth)
             {
-                return value == oth.value;
+                return data == oth.data;
             }
             else
             {
@@ -382,22 +382,22 @@ namespace MilanWilczak.FreediveComp.Models
 
         public override int GetHashCode()
         {
-            return value;
+            return data;
         }
 
         public static bool operator ==(PerformanceComponent a, PerformanceComponent b)
         {
-            return a.value == b.value;
+            return a.data == b.data;
         }
 
         public static bool operator !=(PerformanceComponent a, PerformanceComponent b)
         {
-            return a.value != b.value;
+            return a.data != b.data;
         }
 
         public override string ToString()
         {
-            switch (value)
+            switch (data)
             {
                 case 1: return "Distance";
                 case 2: return "Depth";
@@ -409,7 +409,7 @@ namespace MilanWilczak.FreediveComp.Models
 
         public double? Get(IPerformance performance)
         {
-            switch (value)
+            switch (data)
             {
                 case 1: return performance.Distance;
                 case 2: return performance.Depth;
@@ -421,7 +421,7 @@ namespace MilanWilczak.FreediveComp.Models
 
         public void Modify(Performance performance, double? value)
         {
-            switch (value)
+            switch (data)
             {
                 case 1:
                     performance.Distance = value;

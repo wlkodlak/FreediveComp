@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace MilanWilczak.FreediveComp.Models
 {
@@ -51,6 +52,28 @@ namespace MilanWilczak.FreediveComp.Models
         public HashSet<string> GetNames()
         {
             return new HashSet<string>(rulesIndex.Keys);
+        }
+    }
+
+    public static class Rules
+    {
+        public static readonly IRules AidaSta = new RulesAidaSta();
+        public static readonly IRules AidaDyn = new RulesAidaDyn();
+        public static readonly IRules AidaCwt = new RulesAidaCwt();
+        public static readonly IRules CmasSta = new RulesCmasSta();
+        public static readonly IRules CmasDyn = new RulesCmasDyn();
+        public static readonly IRules CmasCwt = new RulesCmasCwt();
+        public static readonly IRules CmasJumpBlue = new RulesCmasJumpBlue();
+
+        public static void AddTo(RulesRepository repository)
+        {
+            repository.Add(AidaSta);
+            repository.Add(AidaDyn);
+            repository.Add(AidaCwt);
+            repository.Add(CmasSta);
+            repository.Add(CmasDyn);
+            repository.Add(CmasCwt);
+            repository.Add(CmasJumpBlue);
         }
     }
 
@@ -348,6 +371,7 @@ namespace MilanWilczak.FreediveComp.Models
             AidaPenalization.LateStart,
             AidaPenalization.Lanyard,
             AidaPenalization.GrabLine,
+            AidaPenalization.NoTag,
             AidaPenalization.Blackout,
             AidaPenalization.SurfaceProtocol,
             AidaPenalization.SupportiveTouch,
@@ -366,7 +390,7 @@ namespace MilanWilczak.FreediveComp.Models
 
         public ICalculation PointsCalculation => Calculation.RealizedDepth;
 
-        public ICalculation ShortCalculation => Calculation.Minus(Calculation.AnnouncedDepth, Calculation.RealizedDepth);
+        public ICalculation ShortCalculation => Calculation.Plus(Calculation.Constant(1), Calculation.Minus(Calculation.AnnouncedDepth, Calculation.RealizedDepth));
 
         public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
@@ -383,8 +407,8 @@ namespace MilanWilczak.FreediveComp.Models
     {
         public static AidaPenalization EarlyStart = new AidaPenalization("EarlyStart", "Early start", "Early", "Time (seconds)", "s",
             Calculation.Ceiling(Calculation.Multiply(Calculation.Constant(0.2), Calculation.Input)));
-        public static AidaPenalization LateStart = new AidaPenalization("LateStart", "Late start", "Late", "Time (seconds)", "s",
-            Calculation.Ceiling(Calculation.Multiply(Calculation.Constant(0.2), Calculation.Input)));
+        public static AidaPenalization LateStart = new AidaPenalization("LateStart", "Late start", "Late", "Seconds after OT", "s",
+            Calculation.Ceiling(Calculation.Multiply(Calculation.Constant(0.2), Calculation.Minus(Calculation.Input, Calculation.Constant(10)))));
         public static AidaPenalization NoWall = new AidaPenalization("NoWall", "Wrong turn <1m", "Turn", "Count", "x", 5);
         public static AidaPenalization ExitHelp = new AidaPenalization("ExitHelp", "Push/pull on exit", "Exit", 5);
         public static AidaPenalization NoTag = new AidaPenalization("NoTag", "No tag delivered", "Tag", 1);
@@ -451,17 +475,28 @@ namespace MilanWilczak.FreediveComp.Models
 
         public Penalization BuildPenalization(double input, Performance result)
         {
-            return new Penalization
+            Penalization penalization = new Penalization
             {
                 PenalizationId = id,
                 Reason = reason,
                 ShortReason = shortReason,
                 RuleInput = inputName == null ? null : (double?)input,
-                Performance = new Performance
-                {
-                    Points = penaltyCalculation.Evaluate(new CalculationVariables(input, null, result))
-                }
+                Performance = new Performance()
             };
+
+            if (PenaltyCalculation != null)
+            {
+                penalization.Performance.Points = penaltyCalculation.Evaluate(new CalculationVariables(input, null, result));
+            }
+
+            return penalization;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("AidaPenalization(").Append(id).Append(")");
+            return sb.ToString();
         }
     }
 
@@ -487,9 +522,9 @@ namespace MilanWilczak.FreediveComp.Models
             .Descending(CombinedResultsComparers.FinalDuration)
             .Ascending(CombinedResultsComparers.DiffDuration);
 
-        public PerformanceComponent PrimaryComponent => PerformanceComponent.Distance;
+        public PerformanceComponent PrimaryComponent => PerformanceComponent.Duration;
 
-        public PerformanceComponent PenalizationsTarget => PerformanceComponent.Distance;
+        public PerformanceComponent PenalizationsTarget => PerformanceComponent.Duration;
 
         public ICalculation PointsCalculation => null;
 
@@ -579,7 +614,7 @@ namespace MilanWilczak.FreediveComp.Models
 
         public ICalculation PointsCalculation => null;
 
-        public ICalculation ShortCalculation => Calculation.Plus(Calculation.Constant(5), Calculation.Minus(Calculation.AnnouncedDistance, Calculation.RealizedDistance));
+        public ICalculation ShortCalculation => Calculation.Plus(Calculation.Constant(5), Calculation.Minus(Calculation.AnnouncedDepth, Calculation.RealizedDepth));
 
         public Penalization BuildShortPenalization(IPerformance announcement, IPerformance result)
         {
@@ -712,6 +747,13 @@ namespace MilanWilczak.FreediveComp.Models
                 component.Modify(penalization.Performance, calculation.Evaluate(new CalculationVariables(input, null, result)));
             }
             return penalization;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("CmasPenalization(").Append(id).Append(")");
+            return sb.ToString();
         }
     }
 

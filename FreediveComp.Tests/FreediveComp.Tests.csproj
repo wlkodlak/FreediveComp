@@ -59,9 +59,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Constraints.cs" />
     <Compile Include="Models\AuthenticationTokenTest.cs" />
     <Compile Include="Models\CalculationsTest.cs" />
     <Compile Include="Models\JudgePrincipalTest.cs" />
+    <Compile Include="Models\PerformanceComponentTest.cs" />
+    <Compile Include="Models\RulesTest.cs" />
     <Compile Include="Models\SearchTokenizerTest.cs" />
     <Compile Include="Models\StartingLanesFlatBuilderTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
