@@ -23,6 +23,8 @@ namespace MilanWilczak.FreediveComp
             config.IncludeErrorDetailPolicy = IncludeErrorDetailPolicy.Always;
             config.DependencyResolver = new UnityResolver(container);
             app.UseWebApi(config);
+
+            app.UseUdpDiscovery();
         }
     }
 }

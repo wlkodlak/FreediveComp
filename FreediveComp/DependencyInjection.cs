@@ -6,6 +6,7 @@ using Unity;
 using Unity.Exceptions;
 using MilanWilczak.FreediveComp.Api;
 using MilanWilczak.FreediveComp.Models;
+using Unity.Injection;
 
 namespace MilanWilczak.FreediveComp
 {
@@ -25,6 +26,7 @@ namespace MilanWilczak.FreediveComp
             container.RegisterType<IApiSetup, ApiSetup>();
             container.RegisterType<IApiStartingList, ApiStartingList>();
             container.RegisterType<IStartingLanesFlatBuilder, StartingLanesFlatBuilder>();
+            container.RegisterType<IRulesRepository>(new InjectionFactory(RulesRepositoryFactory));
 
             if (PersistenceKind == PeristenceKind.InMemory)
             {
@@ -46,6 +48,13 @@ namespace MilanWilczak.FreediveComp
             }
 
             return container;
+        }
+
+        private object RulesRepositoryFactory(IUnityContainer container)
+        {
+            RulesRepository rulesRepository = new RulesRepository();
+            Rules.AddTo(rulesRepository);
+            return rulesRepository;
         }
     }
 

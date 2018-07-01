@@ -132,6 +132,7 @@
     <Compile Include="Models\StartingLaneFlat.cs" />
     <Compile Include="Models\StartingListJsonRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UdpDiscovery.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

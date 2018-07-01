@@ -18,12 +18,12 @@ namespace MilanWilczak.FreediveComp.Api
         private readonly IRacesIndexRepository racesIndexRepository;
         private readonly SearchTokenizer tokenizer;
 
-        public ApiSetup(IRepositorySetProvider repositorySetProvider, IRulesRepository rulesProvider, IRacesIndexRepository racesIndexRepository)
+        public ApiSetup(IRepositorySetProvider repositorySetProvider, IRulesRepository rulesProvider, IRacesIndexRepository racesIndexRepository, SearchTokenizer tokenizer)
         {
             this.repositorySetProvider = repositorySetProvider;
             this.rulesProvider = rulesProvider;
             this.racesIndexRepository = racesIndexRepository;
-            this.tokenizer = new SearchTokenizer();
+            this.tokenizer = tokenizer;
         }
 
         public RaceSetupDto GetSetup(string raceId)
