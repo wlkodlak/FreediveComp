@@ -233,7 +233,8 @@ namespace MilanWilczak.FreediveComp.Api
             return new ReportDiscipline
             {
                 DisciplineId = discipline.DisciplineId,
-                Name = discipline.ShortName
+                Name = discipline.ShortName,
+                Rules = discipline.Rules
             };
         }
 

@@ -7,6 +7,7 @@ namespace MilanWilczak.FreediveComp.Api
 {
     public interface IApiAthlete
     {
+        List<AthleteDto> GetAthletes(string raceId);
         AthleteDto GetAthlete(string raceId, string athleteId);
         void PostAthlete(string raceId, string athleteId, AthleteDto athlete);
         void PostAthleteResult(string raceId, string athleteId, Judge authenticatedJudge, ActualResultDto result);
@@ -21,6 +22,20 @@ namespace MilanWilczak.FreediveComp.Api
         {
             this.repositorySetProvider = repositorySetProvider;
             this.rulesRepository = rulesRepository;
+        }
+
+        public List<AthleteDto> GetAthletes(string raceId)
+        {
+            if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
+            var repositorySet = repositorySetProvider.GetRepositorySet(raceId);
+            var athletes = repositorySet.Athletes.GetAthletes();
+
+            return athletes.Select(athlete => new AthleteDto
+            {
+                Profile = BuildProfile(athlete),
+                Announcements = athlete.Announcements.Select(BuildAnnouncement).ToList(),
+                Results = athlete.ActualResults.Select(BuildActualResult).ToList()
+            }).ToList();
         }
 
         public AthleteDto GetAthlete(string raceId, string athleteId)

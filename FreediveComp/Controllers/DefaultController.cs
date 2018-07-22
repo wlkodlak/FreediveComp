@@ -101,6 +101,13 @@ namespace MilanWilczak.FreediveComp.Controllers
             return apiAuthentication.GetJudges(raceId);
         }
 
+        [Route("api-1.0/{raceId}/athletes")]
+        [AllowAnonymous]
+        public List<AthleteDto> GetAthletes(string raceId)
+        {
+            return apiAthlete.GetAthletes(raceId);
+        }
+
         [Route("api-1.0/{raceId}/athletes/{athleteId}")]
         [AllowAnonymous]
         public AthleteDto GetAthlete(string raceId, string athleteId)

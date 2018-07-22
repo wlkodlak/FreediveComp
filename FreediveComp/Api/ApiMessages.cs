@@ -44,6 +44,7 @@ namespace MilanWilczak.FreediveComp.Api
     {
         public string DisciplineId { get; set; }
         public string Name { get; set; }
+        public string Rules { get; set; }
     }
 
     public sealed class ReportAnnouncement
