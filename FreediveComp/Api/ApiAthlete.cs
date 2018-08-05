@@ -107,26 +107,35 @@ namespace MilanWilczak.FreediveComp.Api
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(athleteId)) throw new ArgumentNullException("Missing AthleteId");
             var repositorySet = repositorySetProvider.GetRepositorySet(raceId);
+            bool requireProfile = false;
 
             var athleteModel = repositorySet.Athletes.FindAthlete(athleteId);
             if (athleteModel == null)
             {
-                athleteModel = new Models.Athlete();
+                athleteModel = new Athlete();
                 athleteModel.AthleteId = athleteId;
                 athleteModel.Announcements = new List<Announcement>();
                 athleteModel.ActualResults = new List<ActualResult>();
+                requireProfile = true;
             }
 
-            if (string.IsNullOrEmpty(incomingAthlete.Profile.FirstName)) throw new ArgumentNullException("Missing FirstName");
-            if (string.IsNullOrEmpty(incomingAthlete.Profile.Surname)) throw new ArgumentNullException("Missing Surname");
-            athleteModel.FirstName = incomingAthlete.Profile.FirstName;
-            athleteModel.Surname = incomingAthlete.Profile.Surname;
-            athleteModel.Club = incomingAthlete.Profile.Club;
-            athleteModel.CountryName = incomingAthlete.Profile.CountryName;
-            athleteModel.ProfilePhotoName = incomingAthlete.Profile.ProfilePhotoName;
-            athleteModel.Sex = Sex.Parse(incomingAthlete.Profile.Sex);
-            athleteModel.Category = incomingAthlete.Profile.Category;
-            athleteModel.ModeratorNotes = incomingAthlete.Profile.ModeratorNotes;
+            if (incomingAthlete.Profile == null)
+            {
+                if (requireProfile) throw new ArgumentNullException("Missing Profile");
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(incomingAthlete.Profile.FirstName)) throw new ArgumentNullException("Missing FirstName");
+                if (string.IsNullOrEmpty(incomingAthlete.Profile.Surname)) throw new ArgumentNullException("Missing Surname");
+                athleteModel.FirstName = incomingAthlete.Profile.FirstName;
+                athleteModel.Surname = incomingAthlete.Profile.Surname;
+                athleteModel.Club = incomingAthlete.Profile.Club;
+                athleteModel.CountryName = incomingAthlete.Profile.CountryName;
+                athleteModel.ProfilePhotoName = incomingAthlete.Profile.ProfilePhotoName;
+                athleteModel.Sex = Sex.Parse(incomingAthlete.Profile.Sex);
+                athleteModel.Category = incomingAthlete.Profile.Category;
+                athleteModel.ModeratorNotes = incomingAthlete.Profile.ModeratorNotes;
+            }
 
             foreach (var incomingAnnouncement in incomingAthlete.Announcements)
             {
