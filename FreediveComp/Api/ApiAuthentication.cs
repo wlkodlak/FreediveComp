@@ -11,6 +11,7 @@ namespace MilanWilczak.FreediveComp.Api
         JudgeDto Authorize(string raceId, AuthorizeRequestDto authorization);
         AuthenticateResponseDto Authenticate(string raceId, AuthenticateRequestDto authentication);
         List<JudgeDto> GetJudges(string raceId);
+        JudgeDto Verify(string raceId, JudgePrincipal principal);
     }
 
     public class ApiAuthentication : IApiAuthentication
@@ -101,6 +102,7 @@ namespace MilanWilczak.FreediveComp.Api
             JudgeDto judgeDto = new JudgeDto();
             judgeDto.JudgeId = judge.JudgeId;
             judgeDto.JudgeName = judge.Name;
+            judgeDto.IsAdmin = judge.IsAdmin;
             judgeDto.DeviceIds = new List<string>();
             foreach (var judgeDevice in judgesRepository.FindJudgesDevices(judge.JudgeId))
             {
@@ -120,6 +122,7 @@ namespace MilanWilczak.FreediveComp.Api
                 var dto = new JudgeDto();
                 dto.JudgeId = judge.JudgeId;
                 dto.JudgeName = judge.Name;
+                dto.IsAdmin = judge.IsAdmin;
                 dto.DeviceIds = new List<string>();
                 foreach (var judgeDevice in judgesRepository.FindJudgesDevices(judge.JudgeId))
                 {
@@ -127,6 +130,16 @@ namespace MilanWilczak.FreediveComp.Api
                 }
             }
             return judges;
+        }
+
+        public JudgeDto Verify(string raceId, JudgePrincipal principal)
+        {
+            return new JudgeDto
+            {
+                JudgeId = principal.Judge.JudgeId,
+                JudgeName = principal.Judge.Name,
+                IsAdmin = principal.Judge.IsAdmin
+            };
         }
     }
 }

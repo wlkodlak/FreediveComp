@@ -101,6 +101,14 @@ namespace MilanWilczak.FreediveComp.Controllers
             return apiAuthentication.GetJudges(raceId);
         }
 
+        [Route("api-1.0/{raceId}/auth/verify")]
+        [Authorize]
+        public JudgeDto GetAuthVerify(string raceId, IPrincipal principal)
+        {
+            var judgePrincipal = (JudgePrincipal)principal;
+            return apiAuthentication.Verify(raceId, (JudgePrincipal)principal);
+        }
+
         [Route("api-1.0/{raceId}/athletes")]
         [AllowAnonymous]
         public List<AthleteDto> GetAthletes(string raceId)

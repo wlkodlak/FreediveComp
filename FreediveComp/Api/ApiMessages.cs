@@ -233,6 +233,7 @@ namespace MilanWilczak.FreediveComp.Api
     {
         public string JudgeId { get; set; }
         public string JudgeName { get; set; }
+        public bool? IsAdmin { get; set; }
         public List<string> DeviceIds { get; set; }
     }
 
