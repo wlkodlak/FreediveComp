@@ -24,7 +24,8 @@ namespace MilanWilczak.FreediveComp
         public static void UseUdpDiscovery(this IAppBuilder app)
         {
             var context = new OwinContext(app.Properties);
-            var addresses = context.Get<AddressCollection>("host.Addresses");
+            var hostAddresses = context.Get<IList<IDictionary<string, object>>>("host.Addresses");
+            var addresses = new AddressCollection(hostAddresses);
             var cancel = context.Get<CancellationToken>("host.OnAppDisposing");
             var uris = addresses
                 .Where(a => !string.IsNullOrEmpty(a.Port))

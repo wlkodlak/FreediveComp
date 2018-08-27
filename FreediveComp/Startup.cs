@@ -7,21 +7,36 @@ namespace MilanWilczak.FreediveComp
 {
     public class Startup
     {
-        public static void Configure(IAppBuilder app)
-        {
-            var dependencyInjection = new DependencyInjection();
-            dependencyInjection.PersistenceKind = AppConfiguration.GetPersistenceKind();
-            dependencyInjection.PersistencePath = AppConfiguration.GetPersistencePath();
-            var container = dependencyInjection.BuildContainer();
+        private static IUnityContainer container;
 
+        public static IUnityContainer Container
+        {
+            get
+            {
+                if (container != null) return container;
+                lock (typeof(Startup))
+                {
+                    if (container != null) return container;
+
+                    var dependencyInjection = new DependencyInjection();
+                    dependencyInjection.PersistenceKind = AppConfiguration.GetPersistenceKind();
+                    dependencyInjection.PersistencePath = AppConfiguration.GetPersistencePath();
+                    container = dependencyInjection.BuildContainer();
+                    return container;
+                }
+            }
+        }
+
+        public static void Configuration(IAppBuilder app)
+        {
             HttpConfiguration config = new HttpConfiguration();
             config.SuppressDefaultHostAuthentication();
             config.MapHttpAttributeRoutes();
             config.ParameterBindingRules.Insert(0, PrincipalBinder.BindingRule);
             config.Formatters.Remove(config.Formatters.XmlFormatter);
-            config.Filters.Add(container.Resolve<TokenAuthenticationFilter>());
+            config.Filters.Add(Container.Resolve<TokenAuthenticationFilter>());
             config.IncludeErrorDetailPolicy = IncludeErrorDetailPolicy.Always;
-            config.DependencyResolver = new UnityResolver(container);
+            config.DependencyResolver = new UnityResolver(Container);
             app.UseWebApi(config);
 
             app.UseUdpDiscovery();
