@@ -29,7 +29,7 @@ namespace MilanWilczak.FreediveComp.Models
             this.devicesById = new Dictionary<string, JudgeDevice>();
             this.devicesByConnectCode = new Dictionary<string, JudgeDevice>();
             this.authenticationMap = new Dictionary<string, string>();
-            this.serializer = JsonSerializer.Create();
+            this.serializer = JsonSerializer.CreateDefault();
         }
 
         public void Dispose()

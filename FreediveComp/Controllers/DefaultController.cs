@@ -101,6 +101,19 @@ namespace MilanWilczak.FreediveComp.Controllers
             return apiAuthentication.GetJudges(raceId);
         }
 
+        [Route("api-1.0/global/auth/verify")]
+        [Authorize(Roles = "Admin")]
+        public JudgeDto GetAuthVerify(IPrincipal generalPrincipal)
+        {
+            var principal = (JudgePrincipal)generalPrincipal;
+            return new JudgeDto
+            {
+                JudgeId = principal.Judge.JudgeId,
+                JudgeName = principal.Judge.Name,
+                IsAdmin = principal.Judge.IsAdmin
+            };
+        }
+
         [Route("api-1.0/{raceId}/auth/verify")]
         [Authorize]
         public JudgeDto GetAuthVerify(string raceId, IPrincipal principal)

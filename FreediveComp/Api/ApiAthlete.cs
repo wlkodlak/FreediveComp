@@ -137,38 +137,47 @@ namespace MilanWilczak.FreediveComp.Api
                 athleteModel.ModeratorNotes = incomingAthlete.Profile.ModeratorNotes;
             }
 
-            foreach (var incomingAnnouncement in incomingAthlete.Announcements)
+            if (incomingAthlete.Announcements != null)
             {
-                string disciplineId = incomingAnnouncement.DisciplineId;
-                if (string.IsNullOrEmpty(disciplineId)) throw new ArgumentNullException("Missing Announcement.DisciplineId");
-                Discipline discipline = repositorySet.Disciplines.FindDiscipline(disciplineId);
-                if (discipline == null) throw new ArgumentOutOfRangeException("Unknown Announcement.DisciplineId " + disciplineId);
-                IRules disciplineRules = rulesRepository.Get(discipline.Rules);
-
-                if (discipline.AnnouncementsClosed) throw new ArgumentOutOfRangeException("Discipline " + disciplineId + " already closed announcements");
-
-                if (incomingAnnouncement.Performance == null)
+                foreach (var incomingAnnouncement in incomingAthlete.Announcements)
                 {
-                    athleteModel.Announcements.RemoveAll(a => a.DisciplineId == disciplineId);
-                }
-                else
-                {
-                    var announcementModel = athleteModel.Announcements.FirstOrDefault(a => a.DisciplineId == disciplineId);
-                    if (announcementModel == null)
+                    string disciplineId = incomingAnnouncement.DisciplineId;
+                    if (string.IsNullOrEmpty(disciplineId)) throw new ArgumentNullException("Missing Announcement.DisciplineId");
+                    Discipline discipline = repositorySet.Disciplines.FindDiscipline(disciplineId);
+                    if (discipline == null) throw new ArgumentOutOfRangeException("Unknown Announcement.DisciplineId " + disciplineId);
+                    IRules disciplineRules = rulesRepository.Get(discipline.Rules);
+
+                    if (discipline.AnnouncementsClosed) throw new ArgumentOutOfRangeException("Discipline " + disciplineId + " already closed announcements");
+
+                    if (incomingAnnouncement.Performance == null)
                     {
-                        announcementModel = new Announcement();
-                        announcementModel.DisciplineId = incomingAnnouncement.DisciplineId;
+                        athleteModel.Announcements.RemoveAll(a => a.DisciplineId == disciplineId);
                     }
+                    else
+                    {
+                        var newAnnouncement = false;
+                        var announcementModel = athleteModel.Announcements.FirstOrDefault(a => a.DisciplineId == disciplineId);
+                        if (announcementModel == null)
+                        {
+                            announcementModel = new Announcement();
+                            announcementModel.DisciplineId = incomingAnnouncement.DisciplineId;
+                            newAnnouncement = true;
+                        }
 
-                    if (disciplineRules.HasDuration && incomingAnnouncement.Performance.Duration == null)
-                        throw new ArgumentNullException("Missing Announcement.Duration for " + disciplineId);
-                    if (disciplineRules.HasDepth && incomingAnnouncement.Performance.Depth == null)
-                        throw new ArgumentNullException("Missing Announcement.Depth for " + disciplineId);
-                    if (disciplineRules.HasDistance && incomingAnnouncement.Performance.Distance == null)
-                        throw new ArgumentNullException("Missing Announcement.Distance for " + disciplineId);
+                        if (disciplineRules.HasDuration && incomingAnnouncement.Performance.Duration == null)
+                            throw new ArgumentNullException("Missing Announcement.Duration for " + disciplineId);
+                        if (disciplineRules.HasDepth && incomingAnnouncement.Performance.Depth == null)
+                            throw new ArgumentNullException("Missing Announcement.Depth for " + disciplineId);
+                        if (disciplineRules.HasDistance && incomingAnnouncement.Performance.Distance == null)
+                            throw new ArgumentNullException("Missing Announcement.Distance for " + disciplineId);
 
-                    announcementModel.ModeratorNotes = incomingAnnouncement.ModeratorNotes;
-                    announcementModel.Performance = ExtractPerformance(incomingAnnouncement.Performance);
+                        announcementModel.ModeratorNotes = incomingAnnouncement.ModeratorNotes;
+                        announcementModel.Performance = ExtractPerformance(incomingAnnouncement.Performance);
+                        if (newAnnouncement)
+                        {
+                            athleteModel.Announcements.Add(announcementModel);
+                        }
+                    }
                 }
             }
 

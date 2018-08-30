@@ -21,7 +21,7 @@ namespace MilanWilczak.FreediveComp.Models
         {
             this.dataFolder = dataFolder;
             this.mutex = new ReaderWriterLockSlim();
-            this.serializer = JsonSerializer.Create();
+            this.serializer = JsonSerializer.CreateDefault();
             this.raceData = null;
         }
 
@@ -87,14 +87,13 @@ namespace MilanWilczak.FreediveComp.Models
                 using (TextReader textReader = new StreamReader(stream, true))
                 using (JsonReader jsonReader = new JsonTextReader(textReader))
                 {
-                    raceData = serializer.Deserialize<RaceData>(jsonReader);
+                    raceData = serializer.Deserialize<RaceData>(jsonReader) ?? new RaceData();
                 }
             }
             catch (Exception)
             {
                 raceData = new RaceData();
             }
-
         }
 
         [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]

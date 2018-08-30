@@ -8,6 +8,7 @@ using MilanWilczak.FreediveComp.Api;
 using MilanWilczak.FreediveComp.Models;
 using Unity.Injection;
 using System.Reflection;
+using Newtonsoft.Json;
 
 namespace MilanWilczak.FreediveComp
 {

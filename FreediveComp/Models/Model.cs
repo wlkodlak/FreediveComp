@@ -107,6 +107,7 @@ namespace MilanWilczak.FreediveComp.Models
         public double? Depth { get; set; }
         public double? Distance { get; set; }
         public double? Points { get; set; }
+        [JsonIgnore]
         public double? DurationSeconds
         {
             get { return Duration == null ? (double?)null : Duration.Value.TotalSeconds; }

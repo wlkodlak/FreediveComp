@@ -20,7 +20,7 @@ namespace MilanWilczak.FreediveComp.Models
         {
             this.dataFolder = dataFolder;
             this.mutex = new ReaderWriterLockSlim();
-            this.serializer = JsonSerializer.Create();
+            this.serializer = JsonSerializer.CreateDefault();
         }
 
         public void Dispose()
@@ -123,7 +123,7 @@ namespace MilanWilczak.FreediveComp.Models
                 using (TextReader textReader = new StreamReader(stream, true))
                 using (JsonReader jsonReader = new JsonTextReader(textReader))
                 {
-                    entries = serializer.Deserialize<List<RaceIndexEntry>>(jsonReader);
+                    entries = serializer.Deserialize<List<RaceIndexEntry>>(jsonReader) ?? new List<RaceIndexEntry>();
                 }
             }
             catch (Exception)

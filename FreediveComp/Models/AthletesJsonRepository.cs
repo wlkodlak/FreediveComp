@@ -23,7 +23,7 @@ namespace MilanWilczak.FreediveComp.Models
             this.mutex = new ReaderWriterLockSlim();
             this.allAthletesIds = null;
             this.individualAthletes = new Dictionary<string, Athlete>();
-            this.serializer = JsonSerializer.Create();
+            this.serializer = JsonSerializer.CreateDefault();
             this.serializer.Converters.Add(new SexJsonConverter());
             this.serializer.Converters.Add(new CardResultJsonConverter());
         }
