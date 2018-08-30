@@ -33,7 +33,7 @@ namespace MilanWilczak.FreediveComp.Controllers
 
         [Route("api-1.0/global/search")]
         [AllowAnonymous]
-        public List<RaceSearchResultDto> GetGlobalSearch(string query, DateTimeOffset? date)
+        public List<RaceSearchResultDto> GetGlobalSearch(string query = "", DateTimeOffset? date = null)
         {
             return apiSearch.GetSearch(query, date);
         }

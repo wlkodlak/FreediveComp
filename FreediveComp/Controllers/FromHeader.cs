@@ -51,7 +51,7 @@ namespace MilanWilczak.FreediveComp.Controllers
             {
                 var headers = actionContext.Request.Headers;
                 var name = headerName ?? Descriptor.ParameterName;
-                var value = headers.GetValues(name).FirstOrDefault();
+                var value = headers.Contains(name) ? headers.GetValues(name).FirstOrDefault() : null;
                 actionContext.ActionArguments[Descriptor.ParameterName] = value;
                 task.SetResult(null);
             }

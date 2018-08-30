@@ -40,6 +40,8 @@ namespace MilanWilczak.FreediveComp
             app.UseWebApi(config);
 
             app.UseUdpDiscovery();
+
+            app.UseFiles(AppConfiguration.GetUiPath());
         }
     }
 }

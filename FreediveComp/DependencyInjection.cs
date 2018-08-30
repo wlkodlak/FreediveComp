@@ -7,6 +7,7 @@ using Unity.Exceptions;
 using MilanWilczak.FreediveComp.Api;
 using MilanWilczak.FreediveComp.Models;
 using Unity.Injection;
+using System.Reflection;
 
 namespace MilanWilczak.FreediveComp
 {
@@ -145,9 +146,17 @@ namespace MilanWilczak.FreediveComp
             return path;
         }
 
+        public static string GetUiPath()
+        {
+            var path = ConfigurationManager.AppSettings["web:source"];
+            if (string.IsNullOrEmpty(path)) return null;
+            if (path.Contains("%BASEFOLDER%")) path = path.Replace("%BASEFOLDER%", ResolveAppDomainFolder());
+            return path;
+        }
+
         private static bool IsWebBased()
         {
-            return true;
+            return !Assembly.GetEntryAssembly().Location.EndsWith(".exe");
         }
 
         private static string ResolveAppDataFolder()

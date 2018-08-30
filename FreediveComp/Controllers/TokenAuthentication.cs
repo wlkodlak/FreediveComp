@@ -37,7 +37,9 @@ namespace MilanWilczak.FreediveComp.Controllers
 
         private void Authenticate(HttpAuthenticationContext context)
         {
-            var fullTokenString = context.Request.Headers.GetValues("X-Authentication-Token").FirstOrDefault();
+            var headers = context.Request.Headers;
+            if (!headers.Contains("X-Authentication-Token")) return;
+            var fullTokenString = headers.GetValues("X-Authentication-Token").FirstOrDefault();
             if (fullTokenString == null) return;
 
             var token = AuthenticationToken.Parse(fullTokenString);
