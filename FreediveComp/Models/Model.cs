@@ -223,6 +223,8 @@ namespace MilanWilczak.FreediveComp.Models
         public string ShortName { get; set; }
         public string LongName { get; set; }
         public string Rules { get; set; }
+        public Sex Sex { get; set; }
+        public string Category { get; set; }
         public bool AnnouncementsClosed { get; set; }
     }
 
@@ -298,20 +300,20 @@ namespace MilanWilczak.FreediveComp.Models
             int searchResult = MatchQuery(search);
             if (dateResult == 0 || searchResult == 0) return 0;
 
-            return dateResult * searchResult / 10000;
+            return dateResult * searchResult;
         }
 
         private int MatchDate(DateTimeOffset? date)
         {
-            if (date == null) return 80;
+            if (date == null) return 100;
             int score = 0;
 
-            if (Start == null) score += 10;
-            else if (Start.Value <= date.Value) score += 40;
+            if (Start == null) score += 20;
+            else if (Start.Value <= date.Value) score += 50;
             else return 0;
 
-            if (End == null) score += 10;
-            else if (End.Value >= date.Value) score += 40;
+            if (End == null) score += 20;
+            else if (End.Value >= date.Value) score += 50;
             else return 0;
 
             return score;
@@ -319,6 +321,8 @@ namespace MilanWilczak.FreediveComp.Models
 
         private int MatchQuery(HashSet<string> search)
         {
+            if (search.Count == 0) return 100;
+
             var set = new HashSet<string>();
             int matches, extra, unmatched;
 
@@ -338,7 +342,7 @@ namespace MilanWilczak.FreediveComp.Models
             set.ExceptWith(SearchTokens);
             unmatched = set.Count;
 
-            return 1000 * matches / (10 * matches + 2 * extra + 100 * unmatched);
+            return Math.Max(1, 1000 * matches / (10 * matches + 2 * extra + 100 * unmatched));
         }
     }
 

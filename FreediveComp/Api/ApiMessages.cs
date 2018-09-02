@@ -178,6 +178,8 @@ namespace MilanWilczak.FreediveComp.Api
         public string ShortName { get; set; }
         public string LongName { get; set; }
         public string Rules { get; set; }
+        public string Sex { get; set; }
+        public string Category { get; set; }
         public bool AnnouncementsClosed { get; set; }
     }
 

@@ -97,7 +97,9 @@ namespace MilanWilczak.FreediveComp.Api
                 LongName = model.LongName,
                 ShortName = model.ShortName,
                 AnnouncementsClosed = model.AnnouncementsClosed,
-                Rules = model.Rules
+                Rules = model.Rules,
+                Category = model.Category,
+                Sex = model.Sex.ToString()
             };
         }
 
@@ -169,7 +171,9 @@ namespace MilanWilczak.FreediveComp.Api
                 LongName = discipline.LongName,
                 ShortName = discipline.ShortName,
                 AnnouncementsClosed = discipline.AnnouncementsClosed,
-                Rules = discipline.Rules
+                Rules = discipline.Rules,
+                Sex = Sex.Parse(discipline.Sex),
+                Category = discipline.Category
             };
         }
 
