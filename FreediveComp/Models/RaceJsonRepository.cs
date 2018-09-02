@@ -22,6 +22,7 @@ namespace MilanWilczak.FreediveComp.Models
             this.dataFolder = dataFolder;
             this.mutex = new ReaderWriterLockSlim();
             this.serializer = JsonSerializer.CreateDefault();
+            this.serializer.Converters.Add(new SexJsonConverter());
             this.raceData = null;
         }
 
