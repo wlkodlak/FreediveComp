@@ -181,6 +181,7 @@ namespace MilanWilczak.FreediveComp.Api
         public string Sex { get; set; }
         public string Category { get; set; }
         public bool AnnouncementsClosed { get; set; }
+        public bool ResultsClosed { get; set; }
     }
 
     public sealed class AthleteDto

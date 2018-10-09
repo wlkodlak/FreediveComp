@@ -208,6 +208,7 @@ namespace MilanWilczak.FreediveComp.Api
             var discipline = repositorySet.Disciplines.FindDiscipline(incomingResult.DisciplineId);
             if (discipline == null) throw new ArgumentOutOfRangeException("Wrong DisciplineId " + incomingResult.DisciplineId);
             var rules = rulesRepository.Get(discipline.Rules);
+            if (discipline.ResultsClosed) throw new ArgumentOutOfRangeException("Discipline " + incomingResult.DisciplineId + " already closed results");
 
             ActualResult finalResult = new ActualResult();
             finalResult.DisciplineId = discipline.DisciplineId;

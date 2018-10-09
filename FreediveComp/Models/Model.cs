@@ -226,6 +226,7 @@ namespace MilanWilczak.FreediveComp.Models
         public Sex Sex { get; set; }
         public string Category { get; set; }
         public bool AnnouncementsClosed { get; set; }
+        public bool ResultsClosed { get; set; }
     }
 
     public class RaceSettings
