@@ -236,7 +236,9 @@ namespace MilanWilczak.FreediveComp.Models
     {
         public static double GetPoints(IPerformance performance, ICalculation calculation)
         {
-            return calculation.Evaluate(new CalculationVariables(null, null, performance)) ?? 0;
+            var points = calculation.Evaluate(new CalculationVariables(null, null, performance));
+            if (points == null) return 0;
+            return Math.Round(points.Value, 4);
         }
     }
 
@@ -256,6 +258,7 @@ namespace MilanWilczak.FreediveComp.Models
                 Performance = new Performance()
             };
             var penalty = rules.ShortCalculation.Evaluate(new CalculationVariables(null, announced, realized));
+            if (penalty != null) penalty = Math.Round(penalty.Value, 4);
             rules.PenalizationsTarget.Modify(penalization.Performance, penalty);
             return penalization;
         }

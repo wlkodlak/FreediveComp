@@ -125,6 +125,7 @@ namespace MilanWilczak.FreediveComp.Api
             if (rules == RulesUnknown.Default) throw new ArgumentOutOfRangeException("Unknown RulesName " + rulesName);
 
             var calculatedPenalization = rules.BuildShortPenalization(ExtractPerformance(request.Announced), ExtractPerformance(request.Realized));
+            if (calculatedPenalization == null) return null;
             return BuildPenalization(calculatedPenalization);
         }
 

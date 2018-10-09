@@ -13,10 +13,12 @@ namespace MilanWilczak.FreediveComp.Controllers
     public class TokenAuthenticationFilter : IAuthenticationFilter
     {
         private readonly IRepositorySetProvider repositorySetProvider;
+        private readonly AuthenticationToken adminToken;
 
-        public TokenAuthenticationFilter(IRepositorySetProvider repositorySetProvider)
+        public TokenAuthenticationFilter(IRepositorySetProvider repositorySetProvider, AuthenticationToken adminToken)
         {
             this.repositorySetProvider = repositorySetProvider;
+            this.adminToken = adminToken;
         }
 
         public bool AllowMultiple => true;
@@ -41,20 +43,36 @@ namespace MilanWilczak.FreediveComp.Controllers
             var headers = context.Request.Headers;
             if (!headers.Contains("X-Authentication-Token")) return;
             var fullTokenString = headers.GetValues("X-Authentication-Token").FirstOrDefault();
-            if (fullTokenString == null) return;
-
             var token = AuthenticationToken.Parse(fullTokenString);
-            if (token == null) context.ErrorResult = new UnauthorizedResult(new AuthenticationHeaderValue[0], context.Request);
+            if (token == null || !token.Valid) context.ErrorResult = new UnauthorizedResult(new AuthenticationHeaderValue[0], context.Request);
 
-            var repository = repositorySetProvider.GetRepositorySet(token.RaceId).Judges;
+            if (token.Equals(adminToken))
+            {
+                var judge = new Judge
+                {
+                    IsAdmin = true,
+                    JudgeId = "admin",
+                    Name = "Admin"
+                };
+                context.Principal = new JudgePrincipal(judge);
+            }
+            else
+            {
+                var repository = repositorySetProvider.GetRepositorySet(token.RaceId).Judges;
 
-            var judge = repository.FindJudge(token.JudgeId);
-            if (judge == null) context.ErrorResult = new UnauthorizedResult(new AuthenticationHeaderValue[0], context.Request);
+                var judge = repository.FindJudge(token.JudgeId);
+                if (judge == null) context.ErrorResult = new UnauthorizedResult(new AuthenticationHeaderValue[0], context.Request);
 
-            var tokenVerified = repository.FindJudgesDevices(token.JudgeId).Any(d => d.AuthenticationToken == fullTokenString);
-            if (!tokenVerified) context.ErrorResult = new UnauthorizedResult(new AuthenticationHeaderValue[0], context.Request);
+                var tokenVerified = repository.FindJudgesDevices(token.JudgeId).Any(d => d.AuthenticationToken == fullTokenString);
+                if (!tokenVerified) context.ErrorResult = new UnauthorizedResult(new AuthenticationHeaderValue[0], context.Request);
 
-            context.Principal = new JudgePrincipal(judge);
+                context.Principal = new JudgePrincipal(judge);
+            }
+        }
+
+        private void BuildAdminJudge()
+        {
+            throw new NotImplementedException();
         }
 
         public Task ChallengeAsync(HttpAuthenticationChallengeContext context, CancellationToken cancellationToken)
@@ -65,6 +83,13 @@ namespace MilanWilczak.FreediveComp.Controllers
 
     public class IpAuthenticationFilter : IAuthenticationFilter
     {
+        private readonly bool disabledByAdminToken;
+
+        public IpAuthenticationFilter(AuthenticationToken adminToken)
+        {
+            disabledByAdminToken = adminToken != null && adminToken.Valid;
+        }
+
         public bool AllowMultiple => true;
 
         public Task AuthenticateAsync(HttpAuthenticationContext context, CancellationToken cancellationToken)
@@ -84,6 +109,8 @@ namespace MilanWilczak.FreediveComp.Controllers
 
         private void Authenticate(HttpAuthenticationContext context)
         {
+            if (disabledByAdminToken) return;
+
             var ip = context.Request.GetOwinContext().Request.RemoteIpAddress;
             var local = ip == "127.0.0.1" || ip == "::1";
             if (!local) return;

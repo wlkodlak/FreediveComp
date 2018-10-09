@@ -2,6 +2,7 @@
 using MilanWilczak.FreediveComp.Models;
 using System;
 using System.Diagnostics;
+using System.Text;
 using System.Windows.Forms;
 
 namespace FreediveComp.Launcher
@@ -10,13 +11,15 @@ namespace FreediveComp.Launcher
     {
         private IRacesIndexRepository racesRepository;
         private string baseWebUri;
+        private readonly string adminToken;
         private NotifyIcon notifyIcon;
         private ContextMenuStrip menu;
 
-        public ProcessIcon(IRacesIndexRepository racesRepository, string baseWebUri)
+        public ProcessIcon(IRacesIndexRepository racesRepository, string baseWebUri, string adminToken)
         {
             this.racesRepository = racesRepository;
             this.baseWebUri = baseWebUri;
+            this.adminToken = adminToken;
             this.notifyIcon = new NotifyIcon();
             this.notifyIcon.MouseDoubleClick += (sender, e) => OpenBrowser("");
             this.menu = new ContextMenuStrip();
@@ -77,7 +80,14 @@ namespace FreediveComp.Launcher
 
         private void OpenBrowser(string relativePath)
         {
-            Process.Start(baseWebUri + relativePath);
+            var sb = new StringBuilder();
+            sb.Append(baseWebUri);
+            sb.Append(relativePath);
+            if (adminToken != null)
+            {
+                sb.Append("?token=").Append(adminToken);
+            }
+            Process.Start(sb.ToString());
         }
 
         public void Dispose()

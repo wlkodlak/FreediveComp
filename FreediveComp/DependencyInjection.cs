@@ -8,7 +8,6 @@ using MilanWilczak.FreediveComp.Api;
 using MilanWilczak.FreediveComp.Models;
 using Unity.Injection;
 using System.Reflection;
-using Newtonsoft.Json;
 
 namespace MilanWilczak.FreediveComp
 {
@@ -16,10 +15,12 @@ namespace MilanWilczak.FreediveComp
     {
         public PeristenceKind PersistenceKind { get; set; }
         public string PersistencePath { get; set; }
+        public AuthenticationToken AdminToken { get; set; }
 
         public IUnityContainer BuildContainer()
         {
             UnityContainer container = new UnityContainer();
+            container.RegisterInstance(AdminToken);
             container.RegisterType<IApiAthlete, ApiAthlete>();
             container.RegisterType<IApiAuthentication, ApiAuthentication>();
             container.RegisterType<IApiReports, ApiReports>();
@@ -153,6 +154,12 @@ namespace MilanWilczak.FreediveComp
             if (string.IsNullOrEmpty(path)) return null;
             if (path.Contains("%BASEFOLDER%")) path = path.Replace("%BASEFOLDER%", ResolveAppDomainFolder());
             return path;
+        }
+
+        public static AuthenticationToken GetAdminToken()
+        {
+            var adminTokenString = ConfigurationManager.AppSettings["authentication:admin"];
+            return AuthenticationToken.Parse(adminTokenString);
         }
 
         private static bool IsWebBased()

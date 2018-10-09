@@ -6,6 +6,8 @@ namespace MilanWilczak.FreediveComp.Models
 {
     public class AuthenticationToken
     {
+        public static AuthenticationToken Empty = new AuthenticationToken(null, null, null);
+
         private readonly string raceId, judgeId, token;
 
         private AuthenticationToken(string raceId, string judgeId, string token)
@@ -31,9 +33,9 @@ namespace MilanWilczak.FreediveComp.Models
 
         public static AuthenticationToken Parse(string fullToken)
         {
-            if (string.IsNullOrEmpty(fullToken)) return null;
+            if (string.IsNullOrEmpty(fullToken)) return Empty;
             var parts = fullToken.Split(':');
-            if (parts.Length != 3) return null;
+            if (parts.Length != 3) return Empty;
             return new AuthenticationToken(parts[0], parts[1], parts[2]);
         }
 
@@ -61,6 +63,8 @@ namespace MilanWilczak.FreediveComp.Models
                 return false;
             }
         }
+
+        public bool Valid => token != null;
     }
 
     public class JudgePrincipal : IPrincipal, IIdentity

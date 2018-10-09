@@ -15,11 +15,12 @@ namespace FreediveComp.Launcher
         {
             var baseWebUiUri = ConfigurationManager.AppSettings["web:ui"];
             var baseWebApiUri = ConfigurationManager.AppSettings["web:api"];
+            var adminToken = ConfigurationManager.AppSettings["authentication:admin"];
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             using (var web = WebApp.Start<Startup>(baseWebApiUri))
-            using (var icon = new ProcessIcon(Startup.Container.Resolve<IRacesIndexRepository>(), baseWebUiUri))
+            using (var icon = new ProcessIcon(Startup.Container.Resolve<IRacesIndexRepository>(), baseWebUiUri, adminToken))
             {
                 icon.Display();
                 Application.Run();

@@ -47,6 +47,7 @@ namespace MilanWilczak.FreediveComp.Api
                 while (needsNewConnectCode)
                 {
                     judgeDevice.ConnectCode = GenerateConnectCode();
+                    judgeDevice.AuthenticationToken = null;
                     needsNewConnectCode = judgesRepository.FindConnectCode(judgeDevice.ConnectCode) != null;
                 }
                 judgesRepository.SaveJudgeDevice(judgeDevice);
@@ -97,6 +98,7 @@ namespace MilanWilczak.FreediveComp.Api
             }
 
             judgesDevice.AuthenticationToken = AuthenticationToken.Generate(raceId, judge.JudgeId).ToString();
+            judgesDevice.JudgeId = judge.JudgeId;
             judgesRepository.SaveJudgeDevice(judgesDevice);
 
             JudgeDto judgeDto = new JudgeDto();

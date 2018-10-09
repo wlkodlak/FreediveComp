@@ -26,6 +26,7 @@ namespace MilanWilczak.FreediveComp
                     var dependencyInjection = new DependencyInjection();
                     dependencyInjection.PersistenceKind = AppConfiguration.GetPersistenceKind();
                     dependencyInjection.PersistencePath = AppConfiguration.GetPersistencePath();
+                    dependencyInjection.AdminToken = AppConfiguration.GetAdminToken();
                     container = dependencyInjection.BuildContainer();
                     return container;
                 }
