@@ -238,6 +238,26 @@ namespace MilanWilczak.FreediveComp.Export
             return points.ToString() + "p";
         }
 
+        public static string Points(double? points)
+        {
+            if (points == null) return "";
+            return points.Value.ToString() + "p";
+        }
+
+        public static string PerformanceCombined(PerformanceDto performance)
+        {
+            StringBuilder sb = new StringBuilder();
+            var formatters = new Func<PerformanceDto, string>[] { PerformanceDuration, PerformanceDistance, PerformanceDepth };
+            foreach (var formatter in formatters)
+            {
+                var formatted = formatter(performance);
+                if (string.IsNullOrEmpty(formatted)) continue;
+                if (sb.Length != 0) sb.Append(", ");
+                sb.Append(formatted);
+            }
+            return sb.ToString();
+        }
+
         public static string Performance(PerformanceComponent component, PerformanceDto performance)
         {
             if (component == PerformanceComponent.Duration) return PerformanceDuration(performance);

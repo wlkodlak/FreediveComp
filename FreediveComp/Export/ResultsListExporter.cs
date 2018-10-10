@@ -9,14 +9,82 @@ namespace MilanWilczak.FreediveComp.Export
 {
     public class ResultsListExporter
     {
+        private Dictionary<string, IExportedTableColumn<AthleteProfile>> availableAthleteFields = new Dictionary<string, IExportedTableColumn<AthleteProfile>>();
+        private Dictionary<string, IExportedTableColumn<ResultsListReportEntrySubresult>> availableResultsFields = new Dictionary<string, IExportedTableColumn<ResultsListReportEntrySubresult>>();
+
         public ResultsListExporter(IRulesRepository rulesRepository)
         {
+            AddAthleteField("Athlete.AthleteId", "ID", e => e.AthleteId);
+            AddAthleteField("Athlete.FirstName", "First name", e => e.FirstName);
+            AddAthleteField("Athlete.Surname", "Surname", e => e.Surname);
+            AddAthleteField("Athlete.FullName", "Athlete", e => ExportedTableColumnExtractors.AthleteFullName(e));
+            AddAthleteField("Athlete.Club", "Club", e => e.Club);
+            AddAthleteField("Athlete.CountryName", "Country", e => e.CountryName);
+            AddAthleteField("Athlete.Sex", "Sex", e => e.Sex);
+            AddAthleteField("Athlete.Category", "Category", e => e.Category);
+            AddAthleteField("Athlete.ModeratorNotes", "Notes", e => e.ModeratorNotes);
 
+            AddResultsField("Announcement.Duration", "Announced", e => ExportedTableColumnExtractors.PerformanceDuration(e.Announcement.Performance));
+            AddResultsField("Announcement.Depth", "Announced", e => ExportedTableColumnExtractors.PerformanceDepth(e.Announcement.Performance));
+            AddResultsField("Announcement.Distance", "Announced", e => ExportedTableColumnExtractors.PerformanceDistance(e.Announcement.Performance));
+            AddResultsField("Announcement.Points", "Announced", e => ExportedTableColumnExtractors.PerformancePoints(e.Announcement.Performance));
+            AddResultsField("Announcement.Combined", "Announced", e => ExportedTableColumnExtractors.PerformanceCombined(e.Announcement.Performance));
+
+            AddResultsField("CurrentResult.Actual.Duration", "Realized", e => ExportedTableColumnExtractors.PerformanceDuration(e.CurrentResult.Performance));
+            AddResultsField("CurrentResult.Actual.Depth", "Realized", e => ExportedTableColumnExtractors.PerformanceDepth(e.CurrentResult.Performance));
+            AddResultsField("CurrentResult.Actual.Distance", "Realized", e => ExportedTableColumnExtractors.PerformanceDistance(e.CurrentResult.Performance));
+            AddResultsField("CurrentResult.Actual.Points", "Realized", e => ExportedTableColumnExtractors.PerformancePoints(e.CurrentResult.Performance));
+            AddResultsField("CurrentResult.Actual.Combined", "Realized", e => ExportedTableColumnExtractors.PerformanceCombined(e.CurrentResult.Performance));
+
+            AddResultsField("CurrentResult.Final.Duration", "Realized", e => ExportedTableColumnExtractors.PerformanceDuration(e.CurrentResult.FinalPerformance));
+            AddResultsField("CurrentResult.Final.Depth", "Realized", e => ExportedTableColumnExtractors.PerformanceDepth(e.CurrentResult.FinalPerformance));
+            AddResultsField("CurrentResult.Final.Distance", "Realized", e => ExportedTableColumnExtractors.PerformanceDistance(e.CurrentResult.FinalPerformance));
+            AddResultsField("CurrentResult.Final.Points", "Realized", e => ExportedTableColumnExtractors.PerformancePoints(e.CurrentResult.FinalPerformance));
+            AddResultsField("CurrentResult.Final.Combined", "Realized", e => ExportedTableColumnExtractors.PerformanceCombined(e.CurrentResult.FinalPerformance));
+
+            AddResultsField("FinalPoints", "Points", e => ExportedTableColumnExtractors.Points(e.FinalPoints));
+            AddResultsField("FinalPointsTotal", "", e => ExportedTableColumnExtractors.Points(e.FinalPoints));
+        }
+
+        private void AddAthleteField(string key, string title, Func<AthleteProfile, string> extractor)
+        {
+            availableAthleteFields[key] = new ExportedTableColumnManual<AthleteProfile>(key, title, extractor);
+        }
+
+        private void AddResultsField(string key, string title, Func<ResultsListReportEntrySubresult, string> extractor)
+        {
+            availableResultsFields[key] = new ExportedTableColumnManual<ResultsListReportEntrySubresult>(key, title, extractor);
         }
 
         public Func<ResultsListReport, ExportedTable> GetExporter(string preset)
         {
-            throw new NotImplementedException();
+            var exporter = new PreparedResultsListExporter();
+
+            exporter.AddAthleteField(GetAthleteField("Athlete.FullName"));
+            exporter.AddAthleteField(GetAthleteField("Athlete.CountryName"));
+
+            exporter.AddResultField(GetResultsField("Announcement.Combined"), true, true);
+            exporter.AddResultField(GetResultsField("CurrentResult.Final.Combined"), true, true);
+            exporter.AddResultField(GetResultsField("FinalPoints"), true, true);
+
+            exporter.AddResultField(GetResultsField("Announcement.Combined"), true, false);
+            exporter.AddResultField(GetResultsField("CurrentResult.Final.Combined"), true, false);
+
+            exporter.AddResultField(GetResultsField("FinalPointsTotal"), false, true);
+
+            return exporter.Export;
+        }
+
+        private IExportedTableColumn<AthleteProfile> GetAthleteField(string fieldName)
+        {
+            availableAthleteFields.TryGetValue(fieldName, out IExportedTableColumn<AthleteProfile> column);
+            return column;
+        }
+
+        private IExportedTableColumn<ResultsListReportEntrySubresult> GetResultsField(string fieldName)
+        {
+            availableResultsFields.TryGetValue(fieldName, out IExportedTableColumn<ResultsListReportEntrySubresult> column);
+            return column;
         }
     }
 
@@ -29,13 +97,13 @@ namespace MilanWilczak.FreediveComp.Export
 
         public void AddAthleteField(IExportedTableColumn<AthleteProfile> field)
         {
-            athleteFields.Add(field);
+            if (field != null) athleteFields.Add(field);
         }
 
         public void AddResultField(IExportedTableColumn<ResultsListReportEntrySubresult> field, bool hasPerformance, bool hasPoints)
         {
             var fieldSet = GetFieldSet(hasPerformance, hasPoints);
-            if (fieldSet != null) fieldSet.Add(field);
+            if (fieldSet != null && field != null) fieldSet.Add(field);
         }
 
         public ExportedTable Export(ResultsListReport report)
