@@ -8,6 +8,7 @@ using MilanWilczak.FreediveComp.Api;
 using MilanWilczak.FreediveComp.Models;
 using Unity.Injection;
 using System.Reflection;
+using MilanWilczak.FreediveComp.Export;
 
 namespace MilanWilczak.FreediveComp
 {
@@ -28,6 +29,7 @@ namespace MilanWilczak.FreediveComp
             container.RegisterType<IApiSearch, ApiSearch>();
             container.RegisterType<IApiSetup, ApiSetup>();
             container.RegisterType<IApiStartingList, ApiStartingList>();
+            container.RegisterType<IApiExport, ApiExport>();
             container.RegisterType<IStartingLanesFlatBuilder, StartingLanesFlatBuilder>();
             container.RegisterType<IRulesRepository>(new InjectionFactory(RulesRepositoryFactory));
 

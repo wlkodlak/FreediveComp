@@ -230,6 +230,7 @@ namespace MilanWilczak.FreediveComp.Api
 
         private static ReportDiscipline BuildReportDiscipline(Discipline discipline)
         {
+            if (discipline == null) return null;
             return new ReportDiscipline
             {
                 DisciplineId = discipline.DisciplineId,
@@ -251,6 +252,7 @@ namespace MilanWilczak.FreediveComp.Api
 
         private static PerformanceDto BuildPerformance(Performance performance)
         {
+            if (performance == null) return null;
             return new PerformanceDto
             {
                 Depth = performance.Depth,
@@ -262,6 +264,7 @@ namespace MilanWilczak.FreediveComp.Api
 
         private static PenalizationDto BuildPenalization(Penalization penalization)
         {
+            if (penalization == null) return null;
             return new PenalizationDto
             {
                 PenalizationId = penalization.PenalizationId,
@@ -307,6 +310,8 @@ namespace MilanWilczak.FreediveComp.Api
             private string title;
             private bool isSortingColumn;
             private bool isSingleDiscipline;
+            private bool hasFinalPoints;
+            private bool hasPerformance;
             private List<ResultsListColumnComponent> components;
 
             public ResultsListColumn(String title, bool isSortingColumn)
@@ -329,7 +334,9 @@ namespace MilanWilczak.FreediveComp.Api
                     {
                         Title = Title,
                         IsSortingSource = IsSortingColumn,
-                        Discipline = BuildReportDiscipline(Discipline)
+                        Discipline = BuildReportDiscipline(Discipline),
+                        HasFinalPoints = hasFinalPoints,
+                        HasPerformance = hasPerformance
                     };
                 }
             }
@@ -341,6 +348,8 @@ namespace MilanWilczak.FreediveComp.Api
                 var component = new ResultsListColumnComponent(discipline, rules, coeficient);
                 this.components.Add(component);
                 isSingleDiscipline = coeficient == 1.0f && this.components.Count == 1;
+                hasFinalPoints = components.All(c => c.Rules.HasPoints);    // all disciplines support points
+                hasPerformance = components.Select(c => c.Rules.Name).Distinct().Count() == 1;  // all disciplines have same rules
             }
 
             public bool IsParticipating(Athlete athlete)
@@ -365,8 +374,6 @@ namespace MilanWilczak.FreediveComp.Api
                 var announcement = athlete.Announcements.FirstOrDefault(a => a.DisciplineId == disciplineId);
                 var actualResult = athlete.ActualResults.LastOrDefault(a => a.DisciplineId == disciplineId);
 
-                if (announcement == null) return null;
-
                 return new ResultsListReportEntrySubresult
                 {
                     Announcement = BuildReportAnnouncement(announcement),
@@ -377,7 +384,6 @@ namespace MilanWilczak.FreediveComp.Api
 
             private ResultsListReportEntrySubresult BuildCompositeSubresult(Athlete athlete)
             {
-                bool anyResult = false;
                 double finalPoints = 0f;
                 Performance combinedResult = new Performance();
 
@@ -399,15 +405,19 @@ namespace MilanWilczak.FreediveComp.Api
                         combinedResult.Points = Sum(combinedResult.Points, actualResult.FinalPerformance.Points);
                     }
                 }
-                if (!anyResult) return null;
-                return new ResultsListReportEntrySubresult
+                var subresult = new ResultsListReportEntrySubresult();
+                if (hasFinalPoints)
                 {
-                    CurrentResult = new ReportActualResult
+                    subresult.FinalPoints = finalPoints;
+                }
+                if (hasPerformance)
+                {
+                    subresult.CurrentResult = new ReportActualResult
                     {
                         FinalPerformance = BuildPerformance(combinedResult)
-                    },
-                    FinalPoints = finalPoints
-                };
+                    };
+                }
+                return subresult;
             }
 
             private static double? Sum(double? a, double? b)

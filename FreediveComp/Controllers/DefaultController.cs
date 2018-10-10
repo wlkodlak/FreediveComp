@@ -1,7 +1,9 @@
 ﻿using MilanWilczak.FreediveComp.Api;
 using MilanWilczak.FreediveComp.Models;
+using MilanWilczak.FreediveComp.Export;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Security.Principal;
 using System.Web.Http;
 
@@ -17,10 +19,11 @@ namespace MilanWilczak.FreediveComp.Controllers
         private readonly IApiAthlete apiAthlete;
         private readonly IApiReports apiReports;
         private readonly IApiStartingList apiStartingList;
+        private readonly IApiExport apiExport;
 
         public DefaultController(
             IApiSearch apiSearch, IApiRules apiRules, IApiSetup apiSetup, IApiAuthentication apiAuthentication,
-            IApiAthlete apiAthlete, IApiReports apiReports, IApiStartingList apiStartingList)
+            IApiAthlete apiAthlete, IApiReports apiReports, IApiStartingList apiStartingList, IApiExport apiExport)
         {
             this.apiSearch = apiSearch;
             this.apiRules = apiRules;
@@ -29,6 +32,7 @@ namespace MilanWilczak.FreediveComp.Controllers
             this.apiAthlete = apiAthlete;
             this.apiReports = apiReports;
             this.apiStartingList = apiStartingList;
+            this.apiExport = apiExport;
         }
 
         [Route("api-1.0/global/search")]
@@ -184,6 +188,27 @@ namespace MilanWilczak.FreediveComp.Controllers
         public void PostStartingList(string raceId, string startingLaneId, List<StartingListEntryDto> startingList)
         {
             apiStartingList.SetupStartingList(raceId, startingLaneId, startingList);
+        }
+
+        [Route("api-1.0/{raceId}/exports/start/{startingLaneId}")]
+        public HttpResponseMessage GetExportStartingList(string raceId, string startingLaneId, string format = "html", string preset = "minimal")
+        {
+            var report = apiReports.GetReportStartingList(raceId, startingLaneId);
+            return apiExport.ExportStartingList(report, format, preset);
+        }
+
+        [Route("api-1.0/{raceId}/exports/discipline/{disciplineId}")]
+        public HttpResponseMessage GetExportDisciplineResults(string raceId, string disciplineId, string format = "html", string preset = "single")
+        {
+            var report = apiReports.GetReportDisciplineResults(raceId, disciplineId);
+            return apiExport.ExportResultsList(report, format, preset);
+        }
+
+        [Route("api-1.0/{raceId}/exports/results/{resultsListId}")]
+        public HttpResponseMessage GetExportResultsList(string raceId, string resultsListId, string format = "html", string preset = "reduced")
+        {
+            var report = apiReports.GetReportResultsList(raceId, resultsListId);
+            return apiExport.ExportResultsList(report, format, preset);
         }
     }
 }

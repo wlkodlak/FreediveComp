@@ -107,6 +107,7 @@
       <HintPath>..\packages\Microsoft.AspNet.WebApi.Owin.5.2.6\lib\net45\System.Web.Http.Owin.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="Unity.Abstractions, Version=3.3.1.0, Culture=neutral, PublicKeyToken=6d32ff45e0ccc69f, processorArchitecture=MSIL">
       <HintPath>..\packages\Unity.5.8.10\lib\net46\Unity.Abstractions.dll</HintPath>
     </Reference>
@@ -151,6 +152,10 @@
     <Compile Include="Controllers\PrincipalBinder.cs" />
     <Compile Include="Controllers\TokenAuthentication.cs" />
     <Compile Include="DependencyInjection.cs" />
+    <Compile Include="Export\ApiExport.cs" />
+    <Compile Include="Export\ExportedTable.cs" />
+    <Compile Include="Export\ResultsListExporter.cs" />
+    <Compile Include="Export\StartingListExporter.cs" />
     <Compile Include="Models\Authentication.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="Controllers\DefaultController.cs" />
