@@ -174,7 +174,10 @@ namespace MilanWilczak.FreediveComp.Models
                 foreach (var device in data.Devices)
                 {
                     devicesById[device.DeviceId] = device;
-                    authenticationMap[device.AuthenticationToken] = device.JudgeId;
+                    if (device.AuthenticationToken != null)
+                    {
+                        authenticationMap[device.AuthenticationToken] = device.JudgeId;
+                    }
                 }
             }
         }

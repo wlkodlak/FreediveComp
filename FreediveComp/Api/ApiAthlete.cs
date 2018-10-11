@@ -269,13 +269,14 @@ namespace MilanWilczak.FreediveComp.Api
                 }
 
                 finalResult.FinalPerformance = new Performance();
-                CalculateFinalPerformance(finalResult, f => f.DurationSeconds, (p, s) => p.DurationSeconds = s);
-                CalculateFinalPerformance(finalResult, f => f.Depth, (p, s) => p.Depth = s);
-                CalculateFinalPerformance(finalResult, f => f.Distance, (p, s) => p.Distance = s);
-                CalculateFinalPerformance(finalResult, f => f.Points, (p, s) => p.Points = s);
+                CalculateFinalPerformance(finalResult, PerformanceComponent.Duration);
+                CalculateFinalPerformance(finalResult, PerformanceComponent.Depth);
+                CalculateFinalPerformance(finalResult, PerformanceComponent.Distance);
+                CalculateFinalPerformance(finalResult, PerformanceComponent.Points);
             }
 
             athlete.ActualResults.Add(finalResult);
+            repositorySet.Athletes.SaveAthlete(athlete);
         }
 
         private static Penalization ExtractPenalization(PenalizationDto dto)
@@ -307,23 +308,23 @@ namespace MilanWilczak.FreediveComp.Api
             return CardResult.None;
         }
 
-        private static void CalculateFinalPerformance(ActualResult result, Func<Performance, double?> extractor, Action<Performance, double?> setter)
+        private static void CalculateFinalPerformance(ActualResult result, PerformanceComponent component)
         {
-            double? realized = extractor(result.Performance);
+            double? realized = component.Get(result.Performance);
             if (realized == null)
             {
-                setter(result.FinalPerformance, null);
+                component.Modify(result.FinalPerformance, null);
             }
             else
             {
                 double final = realized.Value;
                 foreach (var penalization in result.Penalizations)
                 {
-                    double? minus = extractor(penalization.Performance);
+                    double? minus = component.Get(penalization.Performance);
                     if (minus != null) final -= minus.Value;
                 }
                 if (final < 0) final = 0;
-                setter(result.FinalPerformance, final);
+                component.Modify(result.FinalPerformance, final);
             }
         }
 
