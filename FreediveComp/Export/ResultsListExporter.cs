@@ -2,8 +2,6 @@
 using MilanWilczak.FreediveComp.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 
 namespace MilanWilczak.FreediveComp.Export
 {
@@ -17,7 +15,7 @@ namespace MilanWilczak.FreediveComp.Export
             AddAthleteField("Athlete.AthleteId", "ID", e => e.AthleteId);
             AddAthleteField("Athlete.FirstName", "First name", e => e.FirstName);
             AddAthleteField("Athlete.Surname", "Surname", e => e.Surname);
-            AddAthleteField("Athlete.FullName", "Athlete", e => ExportedTableColumnExtractors.AthleteFullName(e));
+            AddAthleteField("Athlete.FullName", "Name", e => ExportedTableColumnExtractors.AthleteFullName(e));
             AddAthleteField("Athlete.Club", "Club", e => e.Club);
             AddAthleteField("Athlete.CountryName", "Country", e => e.CountryName);
             AddAthleteField("Athlete.Sex", "Sex", e => e.Sex);

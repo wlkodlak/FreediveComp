@@ -42,9 +42,9 @@ namespace MilanWilczak.FreediveComp.Export
             XElement htmlTableHead = new XElement("thead");
             if (table.Groups.Count > 0)
             {
-                htmlTableHead.Add(BuildDataRow(table.Groups));
+                htmlTableHead.Add(BuildHeaderRow(table.Groups));
             }
-            htmlTableHead.Add(BuildDataRow(table.Headers));
+            htmlTableHead.Add(BuildHeaderRow(table.Headers));
             XElement htmlTableBody = new XElement("tbody");
             foreach (var row in table.Rows)
             {
@@ -61,7 +61,7 @@ namespace MilanWilczak.FreediveComp.Export
                         htmlPageHeader,
                         new XElement("table", htmlTableHead, htmlTableBody))));
 
-            var xmlSettings = new XmlWriterSettings { CloseOutput = false, Indent = true, IndentChars = "  ", OmitXmlDeclaration = true, NewLineHandling = NewLineHandling.None };
+            var xmlSettings = new XmlWriterSettings { Indent = true, IndentChars = "  ", OmitXmlDeclaration = true, NewLineHandling = NewLineHandling.None };
             using (var stream = new MemoryStream())
             {
                 using (var xmlWriter = XmlWriter.Create(stream, xmlSettings))
@@ -69,8 +69,7 @@ namespace MilanWilczak.FreediveComp.Export
                     document.WriteTo(xmlWriter);
                 }
                 var message = new HttpResponseMessage(HttpStatusCode.OK);
-                stream.Position = 0;
-                message.Content = new StreamContent(stream);
+                message.Content = new ByteArrayContent(stream.ToArray());
                 message.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
                 return message;
             }
@@ -135,8 +134,7 @@ namespace MilanWilczak.FreediveComp.Export
                     }
                 }
                 var message = new HttpResponseMessage(HttpStatusCode.OK);
-                stream.Position = 0;
-                message.Content = new StreamContent(stream);
+                message.Content = new ByteArrayContent(stream.ToArray());
                 message.Content.Headers.ContentType = new MediaTypeHeaderValue("text/csv");
                 message.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment") { FileName = table.Title + ".csv" };
                 return message;

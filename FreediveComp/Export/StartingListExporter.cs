@@ -23,7 +23,7 @@ namespace MilanWilczak.FreediveComp.Export
             AddColumn("Athlete.AthleteId", "ID", e => e.Athlete.AthleteId);
             AddColumn("Athlete.FirstName", "First name", e => e.Athlete.FirstName);
             AddColumn("Athlete.Surname", "Surname", e => e.Athlete.Surname);
-            AddColumn("Athlete.FullName", "Athlete", e => ExportedTableColumnExtractors.AthleteFullName(e.Athlete));
+            AddColumn("Athlete.FullName", "Name", e => ExportedTableColumnExtractors.AthleteFullName(e.Athlete));
             AddColumn("Athlete.Club", "Club", e => e.Athlete.Club);
             AddColumn("Athlete.CountryName", "Country", e => e.Athlete.CountryName);
             AddColumn("Athlete.Sex", "Sex", e => e.Athlete.Sex);
