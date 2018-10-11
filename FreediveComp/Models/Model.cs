@@ -124,6 +124,7 @@ namespace MilanWilczak.FreediveComp.Models
         public CardResult CardResult { get; set; }
         public string JudgeId { get; set; }
         public string JudgeComment { get; set; }
+        public DateTimeOffset? AddedDate { get; set; }
     }
 
     public class Penalization

@@ -215,6 +215,7 @@ namespace MilanWilczak.FreediveComp.Api
             finalResult.JudgeId = authenticatedJudge.JudgeId;
             finalResult.Penalizations = new List<Penalization>();
             finalResult.CardResult = CardResult.Parse(incomingResult.CardResult);
+            finalResult.AddedDate = DateTimeOffset.UtcNow;
 
             if (incomingResult.JudgeOverride)
             {
@@ -226,7 +227,6 @@ namespace MilanWilczak.FreediveComp.Api
             {
                 var announcement = athlete.Announcements.FirstOrDefault(a => a.DisciplineId == incomingResult.DisciplineId);
                 if (announcement == null) throw new ArgumentOutOfRangeException("No announcement for " + incomingResult.DisciplineId);
-
 
                 foreach (var incomingPenalization in incomingResult.Penalizations)
                 {
@@ -261,18 +261,22 @@ namespace MilanWilczak.FreediveComp.Api
                 if (!rules.HasPoints) finalResult.Performance.Points = null;
                 else finalResult.Performance.Points = rules.GetPoints(incomingResult.Performance);
 
-                var shortPenalization = rules.BuildShortPenalization(announcement.Performance, finalResult.Performance);
-                if (shortPenalization != null)
+                bool skipShortCalculation = finalResult.CardResult == CardResult.Red || finalResult.CardResult == CardResult.DidNotStart;
+                if (!skipShortCalculation)
                 {
-                    finalResult.Penalizations.Insert(0, shortPenalization);
-                    finalResult.CardResult = CombineCards(finalResult.CardResult, CardResult.Yellow);
+                    var shortPenalization = rules.BuildShortPenalization(announcement.Performance, finalResult.Performance);
+                    if (shortPenalization != null)
+                    {
+                        finalResult.Penalizations.Insert(0, shortPenalization);
+                        finalResult.CardResult = CombineCards(finalResult.CardResult, CardResult.Yellow);
+                    }
                 }
 
                 finalResult.FinalPerformance = new Performance();
-                CalculateFinalPerformance(finalResult, PerformanceComponent.Duration);
-                CalculateFinalPerformance(finalResult, PerformanceComponent.Depth);
-                CalculateFinalPerformance(finalResult, PerformanceComponent.Distance);
-                CalculateFinalPerformance(finalResult, PerformanceComponent.Points);
+                CalculateFinalPerformance(finalResult, PerformanceComponent.Duration, rules.PenalizationsTarget);
+                CalculateFinalPerformance(finalResult, PerformanceComponent.Depth, rules.PenalizationsTarget);
+                CalculateFinalPerformance(finalResult, PerformanceComponent.Distance, rules.PenalizationsTarget);
+                CalculateFinalPerformance(finalResult, PerformanceComponent.Points, rules.PenalizationsTarget);
             }
 
             athlete.ActualResults.Add(finalResult);
@@ -308,7 +312,7 @@ namespace MilanWilczak.FreediveComp.Api
             return CardResult.None;
         }
 
-        private static void CalculateFinalPerformance(ActualResult result, PerformanceComponent component)
+        private static void CalculateFinalPerformance(ActualResult result, PerformanceComponent component, PerformanceComponent penalizationTarget)
         {
             double? realized = component.Get(result.Performance);
             if (realized == null)
@@ -323,7 +327,14 @@ namespace MilanWilczak.FreediveComp.Api
                     double? minus = component.Get(penalization.Performance);
                     if (minus != null) final -= minus.Value;
                 }
-                if (final < 0) final = 0;
+                if (final < 0)
+                {
+                    final = 0;
+                }
+                if (component == penalizationTarget && result.CardResult == CardResult.Red)
+                {
+                    final = 0;
+                }
                 component.Modify(result.FinalPerformance, final);
             }
         }

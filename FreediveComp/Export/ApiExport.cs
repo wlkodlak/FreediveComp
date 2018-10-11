@@ -14,6 +14,12 @@ namespace MilanWilczak.FreediveComp.Export
         private readonly StartingListExporter startingListExporter;
         private readonly ResultsListExporter resultsListExporter;
 
+        public ApiExport(StartingListExporter startingListExporter, ResultsListExporter resultsListExporter)
+        {
+            this.startingListExporter = startingListExporter;
+            this.resultsListExporter = resultsListExporter;
+        }
+
         public HttpResponseMessage ExportStartingList(StartingListReport report, string format, string preset)
         {
             var formatter = GetTableWriter(format);

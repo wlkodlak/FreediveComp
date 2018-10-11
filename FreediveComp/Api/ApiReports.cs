@@ -114,6 +114,7 @@ namespace MilanWilczak.FreediveComp.Api
                 var subresult = new ResultsListReportEntrySubresult();
                 subresult.Announcement = BuildReportAnnouncement(announcement);
                 subresult.CurrentResult = BuildReportActualResult(actualResult, judge);
+                subresult.FinalPoints = subresult.CurrentResult?.FinalPerformance?.Points;
                 entry.Subresults.Add(subresult);
 
                 entries.Add(entry);
@@ -123,12 +124,12 @@ namespace MilanWilczak.FreediveComp.Api
 
             return new ResultsListReport
             {
-                Metadata = BuildDisciplineReportMetadata(discipline),
+                Metadata = BuildDisciplineReportMetadata(discipline, rules),
                 Results = entries
             };
         }
 
-        private static ResultsListMetadata BuildDisciplineReportMetadata(Discipline discipline)
+        private static ResultsListMetadata BuildDisciplineReportMetadata(Discipline discipline, IRules rules)
         {
             return new ResultsListMetadata
             {
@@ -139,6 +140,8 @@ namespace MilanWilczak.FreediveComp.Api
                     new ResultsListColumnMetadata
                     {
                         IsSortingSource = true,
+                        HasPerformance = true,
+                        HasFinalPoints = rules.HasPoints,
                         Title = discipline.ShortName,
                         Discipline = BuildReportDiscipline(discipline),
                     }
@@ -221,11 +224,17 @@ namespace MilanWilczak.FreediveComp.Api
                 CardResult = latestResult.CardResult.ToString(),
                 JudgeId = judge != null ? judge.JudgeId : latestResult.JudgeId,
                 JudgeName = judge != null ? judge.Name : "",
-                JudgeComment = latestResult.JudgeComment,
+                JudgeComment = BuildReportResultNote(latestResult),
                 Performance = BuildPerformance(latestResult.Performance),
                 FinalPerformance = BuildPerformance(latestResult.FinalPerformance),
                 Penalizations = latestResult.Penalizations.Select(BuildPenalization).ToList(),
             };
+        }
+
+        private static string BuildReportResultNote(ActualResult latestResult)
+        {
+            if (latestResult.JudgeComment != null) return latestResult.JudgeComment;
+            return string.Join(" ", latestResult.Penalizations.Select(p => p.ShortReason));
         }
 
         private static ReportDiscipline BuildReportDiscipline(Discipline discipline)
