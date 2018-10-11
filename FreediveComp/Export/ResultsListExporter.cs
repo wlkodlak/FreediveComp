@@ -118,7 +118,7 @@ namespace MilanWilczak.FreediveComp.Export
             var fieldSets = new List<List<IExportedTableColumn<ResultsListReportEntrySubresult>>>();
             foreach (var reportColumn in report.Metadata.Columns)
             {
-                var fieldSet = GetFieldSet(reportColumn.HasPerformance, reportColumn.HasFinalPoints);
+                var fieldSet = GetFieldSet(reportColumn.PrimaryComponent != null, reportColumn.HasFinalPoints);
                 if (fieldSet == null) continue;
                 foreach (var field in fieldSet)
                 {

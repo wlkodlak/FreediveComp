@@ -140,7 +140,7 @@ namespace MilanWilczak.FreediveComp.Api
                     new ResultsListColumnMetadata
                     {
                         IsSortingSource = true,
-                        HasPerformance = true,
+                        PrimaryComponent = rules.PrimaryComponent.ToString(),
                         HasFinalPoints = rules.HasPoints,
                         Title = discipline.ShortName,
                         Discipline = BuildReportDiscipline(discipline),
@@ -305,7 +305,7 @@ namespace MilanWilczak.FreediveComp.Api
             {
                 if (comparer == null)
                 {
-                    return Comparer<double?>.Default.Compare(x.FinalPoints, y.FinalPoints);
+                    return -Comparer<double?>.Default.Compare(x.FinalPoints, y.FinalPoints);    // descending by default
                 }
                 else
                 {
@@ -320,7 +320,7 @@ namespace MilanWilczak.FreediveComp.Api
             private bool isSortingColumn;
             private bool isSingleDiscipline;
             private bool hasFinalPoints;
-            private bool hasPerformance;
+            private PerformanceComponent primaryComponent;
             private List<ResultsListColumnComponent> components;
 
             public ResultsListColumn(String title, bool isSortingColumn)
@@ -345,7 +345,7 @@ namespace MilanWilczak.FreediveComp.Api
                         IsSortingSource = IsSortingColumn,
                         Discipline = BuildReportDiscipline(Discipline),
                         HasFinalPoints = hasFinalPoints,
-                        HasPerformance = hasPerformance
+                        PrimaryComponent = primaryComponent == PerformanceComponent.None ? null : primaryComponent.ToString()
                     };
                 }
             }
@@ -358,7 +358,9 @@ namespace MilanWilczak.FreediveComp.Api
                 this.components.Add(component);
                 isSingleDiscipline = coeficient == 1.0f && this.components.Count == 1;
                 hasFinalPoints = components.All(c => c.Rules.HasPoints);    // all disciplines support points
-                hasPerformance = components.Select(c => c.Rules.Name).Distinct().Count() == 1;  // all disciplines have same rules
+                primaryComponent = components.Select(c => c.Rules.PrimaryComponent).FirstOrDefault();
+                bool hasPerformance = components.Select(c => c.Rules.Name).Distinct().Count() == 1;  // all disciplines have same rules
+                if (!hasPerformance) primaryComponent = PerformanceComponent.None;
             }
 
             public bool IsParticipating(Athlete athlete)
@@ -394,24 +396,30 @@ namespace MilanWilczak.FreediveComp.Api
             private ResultsListReportEntrySubresult BuildCompositeSubresult(Athlete athlete)
             {
                 double finalPoints = 0f;
-                Performance combinedResult = new Performance();
+                Performance combinedAnnouncement = new Performance();
+                ActualResult combinedResult = new ActualResult();
+                combinedResult.Performance = new Performance();
+                combinedResult.FinalPerformance = new Performance();
+                combinedResult.Penalizations = new List<Penalization>();
+                combinedResult.CardResult = CardResult.None;
 
                 foreach (var component in components)
                 {
                     var disciplineId = component.Discipline.DisciplineId;
                     var announcement = athlete.Announcements.FirstOrDefault(a => a.DisciplineId == disciplineId);
-                    if (announcement == null) continue;
                     var actualResult = athlete.ActualResults.LastOrDefault(a => a.DisciplineId == disciplineId);
-                    if (actualResult == null) continue;
 
-                    finalPoints += component.CalculateFinalPoints(actualResult) ?? 0.0;
-
-                    if (actualResult.FinalPerformance != null)
+                    if (announcement != null)
                     {
-                        combinedResult.Depth = Sum(combinedResult.Depth, actualResult.FinalPerformance.Depth);
-                        combinedResult.Distance = Sum(combinedResult.Distance, actualResult.FinalPerformance.Distance);
-                        combinedResult.DurationSeconds = Sum(combinedResult.DurationSeconds, actualResult.FinalPerformance.DurationSeconds);
-                        combinedResult.Points = Sum(combinedResult.Points, actualResult.FinalPerformance.Points);
+                        MergePerformance(combinedAnnouncement, announcement.Performance);
+                    }
+                    if (actualResult != null)
+                    {
+                        MergePerformance(combinedResult.Performance, actualResult.Performance);
+                        MergePerformance(combinedResult.FinalPerformance, actualResult.FinalPerformance);
+                        combinedResult.CardResult = CombineCards(combinedResult.CardResult, actualResult.CardResult);
+                        combinedResult.Penalizations.AddRange(actualResult.Penalizations);
+                        finalPoints += component.CalculateFinalPoints(actualResult) ?? 0.0;
                     }
                 }
                 var subresult = new ResultsListReportEntrySubresult();
@@ -419,16 +427,30 @@ namespace MilanWilczak.FreediveComp.Api
                 {
                     subresult.FinalPoints = finalPoints;
                 }
-                if (hasPerformance)
+                if (primaryComponent != PerformanceComponent.None)
                 {
-                    subresult.CurrentResult = new ReportActualResult
-                    {
-                        FinalPerformance = BuildPerformance(combinedResult)
-                    };
+                    subresult.Announcement = BuildReportAnnouncement(new Announcement { Performance = combinedAnnouncement });
+                    subresult.CurrentResult = BuildReportActualResult(combinedResult, null);
                 }
                 return subresult;
             }
 
+            private static void MergePerformance(Performance target, Performance addition)
+            {
+                target.DurationSeconds = Sum(target.DurationSeconds, addition.DurationSeconds);
+                target.Distance = Sum(target.Distance, addition.Distance);
+                target.Depth = Sum(target.Depth, addition.Depth);
+                target.Points = Sum(target.Points, addition.Points);
+            }
+
+            private static CardResult CombineCards(CardResult a, CardResult b)
+            {
+                if (a == CardResult.Red || b == CardResult.Red) return CardResult.Red;
+                if (a == CardResult.Yellow || b == CardResult.Yellow) return CardResult.Yellow;
+                if (a == CardResult.DidNotStart || b == CardResult.DidNotStart) return CardResult.DidNotStart;
+                if (a == CardResult.White || b == CardResult.White) return CardResult.White;
+                return CardResult.None;
+            }
             private static double? Sum(double? a, double? b)
             {
                 if (a == null) return b;
@@ -453,8 +475,8 @@ namespace MilanWilczak.FreediveComp.Api
 
             public double? CalculateFinalPoints(ActualResult result)
             {
-                if (result == null || result.FinalPerformance == null) return null;
-                return result.FinalPerformance.Points * Coeficient;
+                if (result == null || result.FinalPerformance == null || result.FinalPerformance.Points == null) return null;
+                return Math.Round(result.FinalPerformance.Points.Value * Coeficient, 4);
             }
         }
 

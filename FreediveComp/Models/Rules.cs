@@ -143,9 +143,16 @@ namespace MilanWilczak.FreediveComp.Models
 
         public int Compare(ICombinedResult x, ICombinedResult y)
         {
-            T extractedX = extractor(x.Final) ?? default(T);
-            T extractedY = extractor(y.Final) ?? default(T);
+            T extractedX = Extract(x.Final);
+            T extractedY = Extract(y.Final);
             return comparer.Compare(extractedX, extractedY);
+        }
+
+        private T Extract(IPerformance performance)
+        {
+            if (performance == null) return default(T);
+            T? extracted = extractor(performance);
+            return extracted == null ? default(T) : extracted.Value;
         }
     }
 
@@ -162,16 +169,23 @@ namespace MilanWilczak.FreediveComp.Models
 
         public int Compare(ICombinedResult x, ICombinedResult y)
         {
-            T resultX = extractor(x.Realized) ?? default(T);
-            T resultY = extractor(y.Realized) ?? default(T);
-            T announcementX = extractor(x.Announcement) ?? default(T);
-            T announcementY = extractor(y.Announcement) ?? default(T);
+            T resultX = Extract(x.Realized);
+            T resultY = Extract(y.Realized);
+            T announcementX = Extract(x.Announcement);
+            T announcementY = Extract(y.Announcement);
             double diffX = Math.Abs(differenceCalculator(resultX, announcementX));
             double diffY = Math.Abs(differenceCalculator(resultY, announcementY));
 
             if (diffX < diffY) return -1;
             if (diffX > diffY) return 1;
             return 0;
+        }
+
+        private T Extract(IPerformance performance)
+        {
+            if (performance == null) return default(T);
+            T? extracted = extractor(performance);
+            return extracted == null ? default(T) : extracted.Value;
         }
     }
 

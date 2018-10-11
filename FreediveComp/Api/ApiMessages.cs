@@ -109,7 +109,7 @@ namespace MilanWilczak.FreediveComp.Api
         public ReportDiscipline Discipline { get; set; }
         public string Title { get; set; }
         public bool IsSortingSource { get; set; }
-        public bool HasPerformance { get; set; }
+        public string PrimaryComponent { get; set; }
         public bool HasFinalPoints { get; set; }
     }
 
