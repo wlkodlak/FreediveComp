@@ -130,6 +130,7 @@ namespace MilanWilczak.FreediveComp.Api
                 {
                     dto.DeviceIds.Add(judgeDevice.DeviceId);
                 }
+                judges.Add(dto);
             }
             return judges;
         }
