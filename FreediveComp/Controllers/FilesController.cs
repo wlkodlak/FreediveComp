@@ -43,16 +43,42 @@ namespace MilanWilczak.FreediveComp.Controllers
         {
             contents = null;
             using (var stream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
             {
-                var archive = new ZipArchive(stream, ZipArchiveMode.Read);
                 if (subpath.StartsWith("/"))
                 {
                     subpath = subpath.Substring(1);
                 }
+                if (subpath.EndsWith("/"))
+                {
+                    subpath = subpath.Substring(0, subpath.Length - 1);
+                }
                 if (subpath.StartsWith("api")) return false;
-                contents = archive.Entries.Where(e => e.FullName.StartsWith(subpath)).Select(e => new ZipFileInfo(e)).ToList();
-                if (contents.Any()) return true;
-                if (subpath.StartsWith("static/")) return false;
+
+                var files = new List<ZipFileInfo>();
+                foreach (var entry in archive.Entries)
+                {
+                    if (!entry.FullName.StartsWith(subpath)) continue;  // not matched, skip it
+                    if (entry.FullName == subpath) return false;    // exact match means file, not a folder
+                    if (entry.FullName[subpath.Length] != '/') continue;    // name not matched completely yet (a/ vs abc/)
+                    var remaining = entry.FullName.Substring(subpath.Length + 1);
+                    if (string.IsNullOrEmpty(remaining)) continue;  // this is the folder being listed, skip it
+                    var slashPosition = remaining.IndexOf('/');
+                    if (slashPosition < 0)
+                    {
+                        files.Add(new ZipFileInfo(entry));
+                    }
+                    else if (slashPosition == remaining.Length - 1)
+                    {
+                        files.Add(new ZipFileInfo(entry));
+                    }
+                }
+                if (files.Count > 0)
+                {
+                    contents = files;
+                    return true;
+                }
+
                 var zipEntry = archive.GetEntry("index.html");
                 if (zipEntry == null) return false;
                 contents = new IFileInfo[] { new ZipFileInfo(zipEntry) };
@@ -74,7 +100,6 @@ namespace MilanWilczak.FreediveComp.Controllers
                 var zipEntry = archive.GetEntry(subpath);
                 if (zipEntry == null)
                 {
-                    if (subpath.StartsWith("static/")) return false;   // don't simulate static files
                     zipEntry = archive.GetEntry("index.html");
                 }
                 if (zipEntry == null) return false;
@@ -93,10 +118,19 @@ namespace MilanWilczak.FreediveComp.Controllers
             this.Name = zipEntry.Name;
             this.Length = zipEntry.Length;
             this.LastModified = zipEntry.LastWriteTime.DateTime;
-            this.contents = new byte[zipEntry.Length];
-            using (var stream = zipEntry.Open())
+            this.IsDirectory = zipEntry.FullName.EndsWith("/");
+            if (this.IsDirectory)
             {
-                stream.Read(contents, 0, (int) zipEntry.Length);
+                var fullNameSplit = zipEntry.FullName.Split('/');
+                this.Name = fullNameSplit[fullNameSplit.Length - 2];
+            }
+            else
+            {
+                this.contents = new byte[zipEntry.Length];
+                using (var stream = zipEntry.Open())
+                {
+                    stream.Read(contents, 0, (int)zipEntry.Length);
+                }
             }
         }
 
@@ -108,7 +142,7 @@ namespace MilanWilczak.FreediveComp.Controllers
 
         public DateTime LastModified { get; private set; }
 
-        public bool IsDirectory => false;
+        public bool IsDirectory { get; private set; }
 
         public Stream CreateReadStream()
         {
@@ -136,17 +170,23 @@ namespace MilanWilczak.FreediveComp.Controllers
             {
                 subpath = subpath.Substring(1);
             }
+            if (subpath.EndsWith("/"))
+            {
+                subpath = subpath.Substring(0, subpath.Length - 1);
+            }
             if (subpath.StartsWith("api")) return false;
             var fullpath = Path.GetFullPath(Path.Combine(this.folder, subpath));
             if (fullpath.StartsWith(this.folder)) return false;
             var directory = new DirectoryInfo(fullpath);
             if (directory.Exists)
             {
-                contents = directory.GetFiles().Select(f => new LocalFileInfo(f)).ToList();
+                contents = directory.GetFileSystemInfos().Select(f => new LocalFileInfo(f)).ToList();
                 return true;
             }
 
-            if (subpath.StartsWith("static/")) return false;   // don't simulate static files
+            var file = new FileInfo(fullpath);
+            if (file.Exists) return false;  // it is a file, not a folder, disable listing its contents
+
             var indexFile = new FileInfo(Path.Combine(this.folder, "index.html"));
             if (!indexFile.Exists) return false;
             contents = new IFileInfo[] { new LocalFileInfo(indexFile) };
@@ -163,29 +203,45 @@ namespace MilanWilczak.FreediveComp.Controllers
             if (subpath.StartsWith("api")) return false;
             var fullpath = Path.GetFullPath(Path.Combine(this.folder, subpath));
             if (fullpath.StartsWith(this.folder)) return false;
+            var directory = new DirectoryInfo(fullpath);
             var realFile = new FileInfo(fullpath);
-            if (!realFile.Exists)
+            if (directory.Exists)
             {
-                if (subpath.StartsWith("static/")) return false;   // don't simulate static files
-                realFile = new FileInfo(Path.Combine(this.folder, "index.html"));
+                fileInfo = new LocalFileInfo(directory);
             }
-            if (!realFile.Exists) return false;
-
-            fileInfo = new LocalFileInfo(realFile);
-            return true;
+            else if (realFile.Exists)
+            {
+                fileInfo = new LocalFileInfo(realFile);
+            }
+            else
+            { 
+                realFile = new FileInfo(Path.Combine(this.folder, "index.html"));
+                if (realFile.Exists)
+                {
+                    fileInfo = new LocalFileInfo(realFile);
+                }
+            }
+            return fileInfo != null;
         }
     }
 
     public class LocalFileInfo : IFileInfo
     {
-        private FileInfo realFile;
+        private FileSystemInfo realFile;
 
-        public LocalFileInfo(FileInfo realFile)
+        public LocalFileInfo(FileSystemInfo realFile)
         {
             this.realFile = realFile;
         }
 
-        public long Length => realFile.Length;
+        public long Length
+        {
+            get
+            {
+                var fileInfo = realFile as FileInfo;
+                return fileInfo == null ? 0 : fileInfo.Length;
+            }
+        }
 
         public string PhysicalPath => realFile.FullName;
 
@@ -193,7 +249,7 @@ namespace MilanWilczak.FreediveComp.Controllers
 
         public DateTime LastModified => realFile.LastWriteTime;
 
-        public bool IsDirectory => false;
+        public bool IsDirectory => realFile is FileInfo;
 
         public Stream CreateReadStream()
         {
