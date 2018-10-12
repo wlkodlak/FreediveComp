@@ -13,17 +13,27 @@ namespace FreediveComp.Launcher
         [STAThread]
         static void Main()
         {
-            var baseWebUiUri = ConfigurationManager.AppSettings["web:ui"];
-            var baseWebApiUri = ConfigurationManager.AppSettings["web:api"];
-            var adminToken = ConfigurationManager.AppSettings["authentication:admin"];
-
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            using (var web = WebApp.Start<Startup>(baseWebApiUri))
-            using (var icon = new ProcessIcon(Startup.Container.Resolve<IRacesIndexRepository>(), baseWebUiUri, adminToken))
+            try
             {
-                icon.Display();
-                Application.Run();
+                var baseWebUiUri = ConfigurationManager.AppSettings["web:ui"];
+                var baseWebApiUri = ConfigurationManager.AppSettings["web:api"];
+                var adminToken = ConfigurationManager.AppSettings["authentication:admin"];
+                var startOptions = new StartOptions();
+                startOptions.Urls.Add(baseWebApiUri);
+
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                using (var web = WebApp.Start<Startup>(startOptions))
+                using (var icon = new ProcessIcon(Startup.Container.Resolve<IRacesIndexRepository>(), baseWebUiUri, adminToken))
+                {
+                    icon.Display();
+                    Application.Run();
+                }
+            }
+            catch (Exception e)
+            {
+                while (e.InnerException != null) e = e.InnerException;
+                MessageBox.Show(e.ToString(), "Failed to start", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

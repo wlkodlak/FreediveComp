@@ -70,11 +70,6 @@ namespace MilanWilczak.FreediveComp.Controllers
             }
         }
 
-        private void BuildAdminJudge()
-        {
-            throw new NotImplementedException();
-        }
-
         public Task ChallengeAsync(HttpAuthenticationChallengeContext context, CancellationToken cancellationToken)
         {
             return Task.FromResult(true);
