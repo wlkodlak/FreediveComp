@@ -51,7 +51,12 @@ namespace MilanWilczak.FreediveComp.Controllers
                 }
                 if (subpath.StartsWith("api")) return false;
                 contents = archive.Entries.Where(e => e.FullName.StartsWith(subpath)).Select(e => new ZipFileInfo(e)).ToList();
-                return contents.Any();
+                if (contents.Any()) return true;
+                if (subpath.StartsWith("static/")) return false;
+                var zipEntry = archive.GetEntry("index.html");
+                if (zipEntry == null) return false;
+                contents = new IFileInfo[] { new ZipFileInfo(zipEntry) };
+                return true;
             }
         }
 
@@ -135,8 +140,16 @@ namespace MilanWilczak.FreediveComp.Controllers
             var fullpath = Path.GetFullPath(Path.Combine(this.folder, subpath));
             if (fullpath.StartsWith(this.folder)) return false;
             var directory = new DirectoryInfo(fullpath);
-            if (!directory.Exists) return false;
-            contents = directory.GetFiles().Select(f => new LocalFileInfo(f)).ToList();
+            if (directory.Exists)
+            {
+                contents = directory.GetFiles().Select(f => new LocalFileInfo(f)).ToList();
+                return true;
+            }
+
+            if (subpath.StartsWith("static/")) return false;   // don't simulate static files
+            var indexFile = new FileInfo(Path.Combine(this.folder, "index.html"));
+            if (!indexFile.Exists) return false;
+            contents = new IFileInfo[] { new LocalFileInfo(indexFile) };
             return true;
         }
 
@@ -153,7 +166,7 @@ namespace MilanWilczak.FreediveComp.Controllers
             var realFile = new FileInfo(fullpath);
             if (!realFile.Exists)
             {
-                if (fullpath.StartsWith("static/")) return false;   // don't simulate static files
+                if (subpath.StartsWith("static/")) return false;   // don't simulate static files
                 realFile = new FileInfo(Path.Combine(this.folder, "index.html"));
             }
             if (!realFile.Exists) return false;
