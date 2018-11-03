@@ -34,34 +34,34 @@ namespace MilanWilczak.FreediveComp.Export
             AddColumn("Discipline.Name", "Discipline", e => e.Discipline.Name);
             AddColumn("Discipline.Rules", "Rules", e => e.Discipline.Rules);
 
-            AddColumn("Announcement.Duration", "Announced", e => ExportedTableColumnExtractors.PerformanceDuration(e.Announcement.Performance));
-            AddColumn("Announcement.Depth", "Announced", e => ExportedTableColumnExtractors.PerformanceDepth(e.Announcement.Performance));
-            AddColumn("Announcement.Distance", "Announced", e => ExportedTableColumnExtractors.PerformanceDistance(e.Announcement.Performance));
-            AddColumn("Announcement.Points", "Announced", e => ExportedTableColumnExtractors.PerformancePoints(e.Announcement.Performance));
+            AddColumn("Announcement.Duration", "Announced", e => ExportedTableColumnExtractors.PerformanceDuration(e.Announcement?.Performance));
+            AddColumn("Announcement.Depth", "Announced", e => ExportedTableColumnExtractors.PerformanceDepth(e.Announcement?.Performance));
+            AddColumn("Announcement.Distance", "Announced", e => ExportedTableColumnExtractors.PerformanceDistance(e.Announcement?.Performance));
+            AddColumn("Announcement.Points", "Announced", e => ExportedTableColumnExtractors.PerformancePoints(e.Announcement?.Performance));
             AddColumn(new ExportedTableColumnPrimaryComponent<StartingListReportEntry>(
-                "Announcement.Primary", "Announced", rulesRepository, e => e.Discipline.Rules, e => e.Announcement.Performance));
+                "Announcement.Primary", "Announced", rulesRepository, e => e.Discipline.Rules, e => e.Announcement?.Performance));
 
             AddColumn("Start.StartingLaneId", "Lane", e => e.Start.StartingLaneId);
             AddColumn("Start.StartingLaneLongName", "Lane", e => e.Start.StartingLaneLongName);
             AddColumn("Start.WarmUpTime", "WU", e => ExportedTableColumnExtractors.StartTime(e.Start.WarmUpTime));
             AddColumn("Start.OfficialTop", "OT", e => ExportedTableColumnExtractors.StartTime(e.Start.OfficialTop));
 
-            AddColumn("CurrentResult.Actual.Duration", "Realized", e => ExportedTableColumnExtractors.PerformanceDuration(e.CurrentResult.FinalPerformance));
-            AddColumn("CurrentResult.Actual.Depth", "Realized", e => ExportedTableColumnExtractors.PerformanceDepth(e.CurrentResult.FinalPerformance));
-            AddColumn("CurrentResult.Actual.Distance", "Realized", e => ExportedTableColumnExtractors.PerformanceDistance(e.CurrentResult.FinalPerformance));
-            AddColumn("CurrentResult.Actual.Points", "Realized", e => ExportedTableColumnExtractors.PerformancePoints(e.CurrentResult.FinalPerformance));
+            AddColumn("CurrentResult.Actual.Duration", "Realized", e => ExportedTableColumnExtractors.PerformanceDuration(e.CurrentResult?.FinalPerformance));
+            AddColumn("CurrentResult.Actual.Depth", "Realized", e => ExportedTableColumnExtractors.PerformanceDepth(e.CurrentResult?.FinalPerformance));
+            AddColumn("CurrentResult.Actual.Distance", "Realized", e => ExportedTableColumnExtractors.PerformanceDistance(e.CurrentResult?.FinalPerformance));
+            AddColumn("CurrentResult.Actual.Points", "Realized", e => ExportedTableColumnExtractors.PerformancePoints(e.CurrentResult?.FinalPerformance));
             AddColumn(new ExportedTableColumnPrimaryComponent<StartingListReportEntry>(
-                "CurrentResult.Actual.Primary", "Realized", rulesRepository, e => e.Discipline.Rules, e => e.CurrentResult.Performance));
+                "CurrentResult.Actual.Primary", "Realized", rulesRepository, e => e.Discipline.Rules, e => e.CurrentResult?.Performance));
 
-            AddColumn("CurrentResult.Final.Duration", "Realized", e => ExportedTableColumnExtractors.PerformanceDuration(e.CurrentResult.FinalPerformance));
-            AddColumn("CurrentResult.Final.Depth", "Realized", e => ExportedTableColumnExtractors.PerformanceDepth(e.CurrentResult.FinalPerformance));
-            AddColumn("CurrentResult.Final.Distance", "Realized", e => ExportedTableColumnExtractors.PerformanceDistance(e.CurrentResult.FinalPerformance));
-            AddColumn("CurrentResult.Final.Points", "Realized", e => ExportedTableColumnExtractors.PerformancePoints(e.CurrentResult.FinalPerformance));
+            AddColumn("CurrentResult.Final.Duration", "Realized", e => ExportedTableColumnExtractors.PerformanceDuration(e.CurrentResult?.FinalPerformance));
+            AddColumn("CurrentResult.Final.Depth", "Realized", e => ExportedTableColumnExtractors.PerformanceDepth(e.CurrentResult?.FinalPerformance));
+            AddColumn("CurrentResult.Final.Distance", "Realized", e => ExportedTableColumnExtractors.PerformanceDistance(e.CurrentResult?.FinalPerformance));
+            AddColumn("CurrentResult.Final.Points", "Realized", e => ExportedTableColumnExtractors.PerformancePoints(e.CurrentResult?.FinalPerformance));
             AddColumn(new ExportedTableColumnPrimaryComponent<StartingListReportEntry>(
-                "CurrentResult.Final.Primary", "Realized", rulesRepository, e => e.Discipline.Rules, e => e.CurrentResult.Performance));
+                "CurrentResult.Final.Primary", "Realized", rulesRepository, e => e.Discipline.Rules, e => e.CurrentResult?.Performance));
 
-            AddColumn("CurrentResult.CardResult", "Card", e => e.CurrentResult.CardResult);
-            AddColumn("CurrentResult.JudgeComment", "Comment", e => e.CurrentResult.JudgeComment);
+            AddColumn("CurrentResult.CardResult", "Card", e => e.CurrentResult?.CardResult);
+            AddColumn("CurrentResult.JudgeComment", "Comment", e => e.CurrentResult?.JudgeComment);
 
             minimal = BuildExporter(
                 "Athlete.FullName",

@@ -22,23 +22,23 @@ namespace MilanWilczak.FreediveComp.Export
             AddAthleteField("Athlete.Category", "Category", e => e.Category);
             AddAthleteField("Athlete.ModeratorNotes", "Notes", e => e.ModeratorNotes);
 
-            AddResultsField("Announcement.Duration", "Announced", e => ExportedTableColumnExtractors.PerformanceDuration(e.Announcement.Performance));
-            AddResultsField("Announcement.Depth", "Announced", e => ExportedTableColumnExtractors.PerformanceDepth(e.Announcement.Performance));
-            AddResultsField("Announcement.Distance", "Announced", e => ExportedTableColumnExtractors.PerformanceDistance(e.Announcement.Performance));
-            AddResultsField("Announcement.Points", "Announced", e => ExportedTableColumnExtractors.PerformancePoints(e.Announcement.Performance));
-            AddResultsField("Announcement.Combined", "Announced", e => ExportedTableColumnExtractors.PerformanceCombined(e.Announcement.Performance));
+            AddResultsField("Announcement.Duration", "Announced", e => ExportedTableColumnExtractors.PerformanceDuration(e.Announcement?.Performance));
+            AddResultsField("Announcement.Depth", "Announced", e => ExportedTableColumnExtractors.PerformanceDepth(e.Announcement?.Performance));
+            AddResultsField("Announcement.Distance", "Announced", e => ExportedTableColumnExtractors.PerformanceDistance(e.Announcement?.Performance));
+            AddResultsField("Announcement.Points", "Announced", e => ExportedTableColumnExtractors.PerformancePoints(e.Announcement?.Performance));
+            AddResultsField("Announcement.Combined", "Announced", e => ExportedTableColumnExtractors.PerformanceCombined(e.Announcement?.Performance));
 
-            AddResultsField("CurrentResult.Actual.Duration", "Realized", e => ExportedTableColumnExtractors.PerformanceDuration(e.CurrentResult.Performance));
-            AddResultsField("CurrentResult.Actual.Depth", "Realized", e => ExportedTableColumnExtractors.PerformanceDepth(e.CurrentResult.Performance));
-            AddResultsField("CurrentResult.Actual.Distance", "Realized", e => ExportedTableColumnExtractors.PerformanceDistance(e.CurrentResult.Performance));
-            AddResultsField("CurrentResult.Actual.Points", "Realized", e => ExportedTableColumnExtractors.PerformancePoints(e.CurrentResult.Performance));
-            AddResultsField("CurrentResult.Actual.Combined", "Realized", e => ExportedTableColumnExtractors.PerformanceCombined(e.CurrentResult.Performance));
+            AddResultsField("CurrentResult.Actual.Duration", "Realized", e => ExportedTableColumnExtractors.PerformanceDuration(e.CurrentResult?.Performance));
+            AddResultsField("CurrentResult.Actual.Depth", "Realized", e => ExportedTableColumnExtractors.PerformanceDepth(e.CurrentResult?.Performance));
+            AddResultsField("CurrentResult.Actual.Distance", "Realized", e => ExportedTableColumnExtractors.PerformanceDistance(e.CurrentResult?.Performance));
+            AddResultsField("CurrentResult.Actual.Points", "Realized", e => ExportedTableColumnExtractors.PerformancePoints(e.CurrentResult?.Performance));
+            AddResultsField("CurrentResult.Actual.Combined", "Realized", e => ExportedTableColumnExtractors.PerformanceCombined(e.CurrentResult?.Performance));
 
-            AddResultsField("CurrentResult.Final.Duration", "Realized", e => ExportedTableColumnExtractors.PerformanceDuration(e.CurrentResult.FinalPerformance));
-            AddResultsField("CurrentResult.Final.Depth", "Realized", e => ExportedTableColumnExtractors.PerformanceDepth(e.CurrentResult.FinalPerformance));
-            AddResultsField("CurrentResult.Final.Distance", "Realized", e => ExportedTableColumnExtractors.PerformanceDistance(e.CurrentResult.FinalPerformance));
-            AddResultsField("CurrentResult.Final.Points", "Realized", e => ExportedTableColumnExtractors.PerformancePoints(e.CurrentResult.FinalPerformance));
-            AddResultsField("CurrentResult.Final.Combined", "Realized", e => ExportedTableColumnExtractors.PerformanceCombined(e.CurrentResult.FinalPerformance));
+            AddResultsField("CurrentResult.Final.Duration", "Realized", e => ExportedTableColumnExtractors.PerformanceDuration(e.CurrentResult?.FinalPerformance));
+            AddResultsField("CurrentResult.Final.Depth", "Realized", e => ExportedTableColumnExtractors.PerformanceDepth(e.CurrentResult?.FinalPerformance));
+            AddResultsField("CurrentResult.Final.Distance", "Realized", e => ExportedTableColumnExtractors.PerformanceDistance(e.CurrentResult?.FinalPerformance));
+            AddResultsField("CurrentResult.Final.Points", "Realized", e => ExportedTableColumnExtractors.PerformancePoints(e.CurrentResult?.FinalPerformance));
+            AddResultsField("CurrentResult.Final.Combined", "Realized", e => ExportedTableColumnExtractors.PerformanceCombined(e.CurrentResult?.FinalPerformance));
 
             AddResultsField("FinalPoints", "Points", e => ExportedTableColumnExtractors.Points(e.FinalPoints));
             AddResultsField("FinalPointsTotal", "", e => ExportedTableColumnExtractors.Points(e.FinalPoints));
