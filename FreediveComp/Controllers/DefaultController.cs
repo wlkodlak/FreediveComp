@@ -107,9 +107,9 @@ namespace MilanWilczak.FreediveComp.Controllers
 
         [Route("api-1.0/{raceId}/auth/judges")]
         [AllowAnonymous]
-        public List<JudgeDto> GetAuthJudges(string raceId)
+        public List<JudgeDto> GetAuthJudges(string raceId, IPrincipal generalPrincipal)
         {
-            return apiAuthentication.GetJudges(raceId);
+            return apiAuthentication.GetJudges(raceId, generalPrincipal as JudgePrincipal);
         }
 
         [Route("api-1.0/global/auth/verify")]
@@ -135,16 +135,16 @@ namespace MilanWilczak.FreediveComp.Controllers
 
         [Route("api-1.0/{raceId}/athletes")]
         [AllowAnonymous]
-        public List<AthleteDto> GetAthletes(string raceId)
+        public List<AthleteDto> GetAthletes(string raceId, IPrincipal principal)
         {
-            return apiAthlete.GetAthletes(raceId);
+            return apiAthlete.GetAthletes(raceId, principal as JudgePrincipal);
         }
 
         [Route("api-1.0/{raceId}/athletes/{athleteId}")]
         [AllowAnonymous]
-        public AthleteDto GetAthlete(string raceId, string athleteId)
+        public AthleteDto GetAthlete(string raceId, string athleteId, IPrincipal principal)
         {
-            return apiAthlete.GetAthlete(raceId, athleteId);
+            return apiAthlete.GetAthlete(raceId, athleteId, principal as JudgePrincipal);
         }
 
         [Route("api-1.0/{raceId}/athletes/{athleteId}")]
@@ -164,23 +164,23 @@ namespace MilanWilczak.FreediveComp.Controllers
 
         [Route("api-1.0/{raceId}/reports/start/{startingLaneId?}")]
         [AllowAnonymous]
-        public StartingListReport GetReportStartingList(string raceId, string startingLaneId)
+        public StartingListReport GetReportStartingList(string raceId, string startingLaneId, IPrincipal principal)
         {
-            return apiReports.GetReportStartingList(raceId, startingLaneId);
+            return apiReports.GetReportStartingList(raceId, startingLaneId, principal as JudgePrincipal);
         }
 
         [Route("api-1.0/{raceId}/reports/discipline/{disciplineId}")]
         [AllowAnonymous]
-        public ResultsListReport GetReportDisciplineResults(string raceId, string disciplineId)
+        public ResultsListReport GetReportDisciplineResults(string raceId, string disciplineId, IPrincipal principal)
         {
-            return apiReports.GetReportDisciplineResults(raceId, disciplineId);
+            return apiReports.GetReportDisciplineResults(raceId, disciplineId, principal as JudgePrincipal);
         }
 
         [Route("api-1.0/{raceId}/reports/results/{resultsListId}")]
         [AllowAnonymous]
-        public ResultsListReport GetReportResultsList(string raceId, string resultsListId)
+        public ResultsListReport GetReportResultsList(string raceId, string resultsListId, IPrincipal principal)
         {
-            return apiReports.GetReportResultsList(raceId, resultsListId);
+            return apiReports.GetReportResultsList(raceId, resultsListId, principal as JudgePrincipal);
         }
 
         [Route("api-1.0/{raceId}/start/{startingLaneId?}")]
@@ -198,23 +198,23 @@ namespace MilanWilczak.FreediveComp.Controllers
         }
 
         [Route("api-1.0/{raceId}/exports/start/{startingLaneId}")]
-        public HttpResponseMessage GetExportStartingList(string raceId, string startingLaneId, string format = "html", string preset = "minimal")
+        public HttpResponseMessage GetExportStartingList(string raceId, string startingLaneId, IPrincipal principal, string format = "html", string preset = "minimal")
         {
-            var report = apiReports.GetReportStartingList(raceId, startingLaneId);
+            var report = apiReports.GetReportStartingList(raceId, startingLaneId, principal as JudgePrincipal);
             return apiExport.ExportStartingList(report, format, preset);
         }
 
         [Route("api-1.0/{raceId}/exports/discipline/{disciplineId}")]
-        public HttpResponseMessage GetExportDisciplineResults(string raceId, string disciplineId, string format = "html", string preset = "single")
+        public HttpResponseMessage GetExportDisciplineResults(string raceId, string disciplineId, IPrincipal principal, string format = "html", string preset = "single")
         {
-            var report = apiReports.GetReportDisciplineResults(raceId, disciplineId);
+            var report = apiReports.GetReportDisciplineResults(raceId, disciplineId, principal as JudgePrincipal);
             return apiExport.ExportResultsList(report, format, preset);
         }
 
         [Route("api-1.0/{raceId}/exports/results/{resultsListId}")]
-        public HttpResponseMessage GetExportResultsList(string raceId, string resultsListId, string format = "html", string preset = "reduced")
+        public HttpResponseMessage GetExportResultsList(string raceId, string resultsListId, IPrincipal principal, string format = "html", string preset = "reduced")
         {
-            var report = apiReports.GetReportResultsList(raceId, resultsListId);
+            var report = apiReports.GetReportResultsList(raceId, resultsListId, principal as JudgePrincipal);
             return apiExport.ExportResultsList(report, format, preset);
         }
     }

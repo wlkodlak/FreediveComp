@@ -11,7 +11,7 @@ namespace MilanWilczak.FreediveComp.Api
         JudgeDto Authorize(string raceId, AuthorizeRequestDto authorization);
         JudgeDto Unauthorize(string raceId, UnauthorizeRequestDto authorization);
         AuthenticateResponseDto Authenticate(string raceId, AuthenticateRequestDto authentication);
-        List<JudgeDto> GetJudges(string raceId);
+        List<JudgeDto> GetJudges(string raceId, JudgePrincipal principal);
         JudgeDto Verify(string raceId, JudgePrincipal principal);
     }
 
@@ -146,10 +146,11 @@ namespace MilanWilczak.FreediveComp.Api
             return judgeDto;
         }
 
-        public List<JudgeDto> GetJudges(string raceId)
+        public List<JudgeDto> GetJudges(string raceId, JudgePrincipal principal)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
 
+            var isAdmin = principal != null && principal.Judge.IsAdmin;
             var judgesRepository = repositorySetProvider.GetRepositorySet(raceId).Judges;
             var judges = new List<JudgeDto>();
             foreach (var judge in judgesRepository.GetJudges())
@@ -158,10 +159,13 @@ namespace MilanWilczak.FreediveComp.Api
                 dto.JudgeId = judge.JudgeId;
                 dto.JudgeName = judge.Name;
                 dto.IsAdmin = judge.IsAdmin;
-                dto.DeviceIds = new List<string>();
-                foreach (var judgeDevice in judgesRepository.FindJudgesDevices(judge.JudgeId))
+                if (isAdmin)
                 {
-                    dto.DeviceIds.Add(judgeDevice.DeviceId);
+                    dto.DeviceIds = new List<string>();
+                    foreach (var judgeDevice in judgesRepository.FindJudgesDevices(judge.JudgeId))
+                    {
+                        dto.DeviceIds.Add(judgeDevice.DeviceId);
+                    }
                 }
                 judges.Add(dto);
             }

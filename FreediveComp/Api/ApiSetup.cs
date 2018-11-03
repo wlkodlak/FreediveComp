@@ -98,6 +98,8 @@ namespace MilanWilczak.FreediveComp.Api
                 ShortName = model.ShortName,
                 AnnouncementsClosed = model.AnnouncementsClosed,
                 ResultsClosed = model.ResultsClosed,
+                AnnouncementsPublic = model.AnnouncementsPublic,
+                ResultsPublic = model.ResultsPublic,
                 Rules = model.Rules,
                 Category = model.Category,
                 Sex = model.Sex.ToString()
@@ -173,6 +175,8 @@ namespace MilanWilczak.FreediveComp.Api
                 ShortName = discipline.ShortName,
                 AnnouncementsClosed = discipline.AnnouncementsClosed,
                 ResultsClosed = discipline.ResultsClosed,
+                AnnouncementsPublic = discipline.AnnouncementsPublic,
+                ResultsPublic = discipline.ResultsPublic,
                 Rules = discipline.Rules,
                 Sex = Sex.Parse(discipline.Sex),
                 Category = discipline.Category

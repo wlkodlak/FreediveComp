@@ -7,8 +7,8 @@ namespace MilanWilczak.FreediveComp.Api
 {
     public interface IApiAthlete
     {
-        List<AthleteDto> GetAthletes(string raceId);
-        AthleteDto GetAthlete(string raceId, string athleteId);
+        List<AthleteDto> GetAthletes(string raceId, JudgePrincipal principal);
+        AthleteDto GetAthlete(string raceId, string athleteId, JudgePrincipal principal);
         void PostAthlete(string raceId, string athleteId, AthleteDto athlete);
         void PostAthleteResult(string raceId, string athleteId, Judge authenticatedJudge, ActualResultDto result);
     }
@@ -24,43 +24,56 @@ namespace MilanWilczak.FreediveComp.Api
             this.rulesRepository = rulesRepository;
         }
 
-        public List<AthleteDto> GetAthletes(string raceId)
+        public List<AthleteDto> GetAthletes(string raceId, JudgePrincipal principal)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
+
             var repositorySet = repositorySetProvider.GetRepositorySet(raceId);
+            var disciplines = repositorySet.Disciplines.GetDisciplines();
+            var isAuthenticated = principal != null;
+            var allowedAnnouncements = new HashSet<string>(disciplines.Where(d => d.AnnouncementsPublic || isAuthenticated).Select(d => d.DisciplineId));
+            var allowedResults = new HashSet<string>(disciplines.Where(d => d.ResultsPublic || isAuthenticated).Select(d => d.DisciplineId));
+
             var athletes = repositorySet.Athletes.GetAthletes();
 
             return athletes.Select(athlete => new AthleteDto
             {
                 Profile = BuildProfile(athlete),
-                Announcements = athlete.Announcements.Select(BuildAnnouncement).ToList(),
-                Results = athlete.ActualResults.Select(BuildActualResult).ToList()
+                Announcements = athlete.Announcements.Select(a => BuildAnnouncement(a, allowedAnnouncements.Contains(a.DisciplineId))).ToList(),
+                Results = athlete.ActualResults.Where(r => allowedResults.Contains(r.DisciplineId)).Select(BuildActualResult).ToList()
             }).ToList();
         }
 
-        public AthleteDto GetAthlete(string raceId, string athleteId)
+        public AthleteDto GetAthlete(string raceId, string athleteId, JudgePrincipal principal)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(athleteId)) throw new ArgumentNullException("Missing AthleteId");
+
             var repositorySet = repositorySetProvider.GetRepositorySet(raceId);
+            var disciplines = repositorySet.Disciplines.GetDisciplines();
+            var isAuthenticated = principal != null;
+            var allowedAnnouncements = new HashSet<string>(disciplines.Where(d => d.AnnouncementsPublic || isAuthenticated).Select(d => d.DisciplineId));
+            var allowedResults = new HashSet<string>(disciplines.Where(d => d.ResultsPublic || isAuthenticated).Select(d => d.DisciplineId));
+
             var athlete = repositorySet.Athletes.FindAthlete(athleteId);
             if (athlete == null) throw new ArgumentOutOfRangeException("Unknown AthleteId " + athleteId);
 
-            return new AthleteDto
+            AthleteDto athleteDto = new AthleteDto
             {
                 Profile = BuildProfile(athlete),
-                Announcements = athlete.Announcements.Select(BuildAnnouncement).ToList(),
-                Results = athlete.ActualResults.Select(BuildActualResult).ToList()
+                Announcements = athlete.Announcements.Select(a => BuildAnnouncement(a, allowedAnnouncements.Contains(a.DisciplineId))).ToList(),
+                Results = athlete.ActualResults.Where(r => allowedResults.Contains(r.DisciplineId)).Select(BuildActualResult).ToList()
             };
+            return athleteDto;
         }
 
-        private static AnnouncementDto BuildAnnouncement(Announcement model)
+        private static AnnouncementDto BuildAnnouncement(Announcement model, bool includePerformance)
         {
             return new AnnouncementDto
             {
                 DisciplineId = model.DisciplineId,
                 ModeratorNotes = model.ModeratorNotes,
-                Performance = BuildPerformance(model.Performance),
+                Performance = includePerformance ? BuildPerformance(model.Performance) : null,
             };
         }
 

@@ -7,9 +7,9 @@ namespace MilanWilczak.FreediveComp.Api
 {
     public interface IApiReports
     {
-        StartingListReport GetReportStartingList(string raceId, string startingLaneId);
-        ResultsListReport GetReportDisciplineResults(string raceId, string disciplineId);
-        ResultsListReport GetReportResultsList(string raceId, string resultsListId);
+        StartingListReport GetReportStartingList(string raceId, string startingLaneId, JudgePrincipal principal);
+        ResultsListReport GetReportDisciplineResults(string raceId, string disciplineId, JudgePrincipal principal);
+        ResultsListReport GetReportResultsList(string raceId, string resultsListId, JudgePrincipal principal);
     }
 
     public class ApiReports : IApiReports
@@ -25,7 +25,7 @@ namespace MilanWilczak.FreediveComp.Api
             this.rulesProvider = rulesProvider;
         }
 
-        public StartingListReport GetReportStartingList(string raceId, string startingLaneId)
+        public StartingListReport GetReportStartingList(string raceId, string startingLaneId, JudgePrincipal principal)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             IRepositorySet repositorySet = repositorySetProvider.GetRepositorySet(raceId);
@@ -37,6 +37,7 @@ namespace MilanWilczak.FreediveComp.Api
             var disciplines = repositorySet.Disciplines.GetDisciplines().ToDictionary(d => d.DisciplineId);
             var startingList = repositorySet.StartingList.GetStartingList();
             var judges = repositorySet.Judges.GetJudges().ToDictionary(j => j.JudgeId);
+            var isAuthenticated = principal != null;
 
             var report = new StartingListReport();
             report.Title = BuildStartingListTitle(titleSource);
@@ -59,10 +60,13 @@ namespace MilanWilczak.FreediveComp.Api
                     judges.TryGetValue(latestResult.JudgeId, out judge);
                 }
 
+                var allowAnnouncement = isAuthenticated || discipline.AnnouncementsPublic;
+                var allowResult = isAuthenticated || discipline.ResultsPublic;
+
                 StartingListReportEntry entry = new StartingListReportEntry();
-                entry.Announcement = BuildReportAnnouncement(announcement);
+                entry.Announcement = allowAnnouncement ? BuildReportAnnouncement(announcement) : null;
                 entry.Athlete = ApiAthlete.BuildProfile(athlete);
-                entry.CurrentResult = BuildReportActualResult(latestResult, judge);
+                entry.CurrentResult = allowResult ? BuildReportActualResult(latestResult, judge) : null;
                 entry.Discipline = BuildReportDiscipline(discipline);
                 entry.Start = BuildReportStart(startingListEntry, startingLane);
                 report.Entries.Add(entry);
@@ -85,7 +89,7 @@ namespace MilanWilczak.FreediveComp.Api
             return titleSource == null ? "" : titleSource.FullName;
         }
 
-        public ResultsListReport GetReportDisciplineResults(string raceId, string disciplineId)
+        public ResultsListReport GetReportDisciplineResults(string raceId, string disciplineId, JudgePrincipal principal)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(disciplineId)) throw new ArgumentNullException("Missing DisciplineId");
@@ -100,6 +104,9 @@ namespace MilanWilczak.FreediveComp.Api
             var athletes = repositorySet.Athletes.GetAthletes();
             var judges = repositorySet.Judges.GetJudges();
 
+            var allowAnnouncement = principal != null || discipline.AnnouncementsPublic;
+            var allowResult = principal != null || discipline.ResultsPublic;
+
             var entries = new List<ResultsListReportEntry>();
             foreach (var athlete in athletes)
             {
@@ -112,9 +119,15 @@ namespace MilanWilczak.FreediveComp.Api
                 entry.Athlete = ApiAthlete.BuildProfile(athlete);
                 entry.Subresults = new List<ResultsListReportEntrySubresult>();
                 var subresult = new ResultsListReportEntrySubresult();
-                subresult.Announcement = BuildReportAnnouncement(announcement);
-                subresult.CurrentResult = BuildReportActualResult(actualResult, judge);
-                subresult.FinalPoints = subresult.CurrentResult?.FinalPerformance?.Points;
+                if (allowAnnouncement)
+                {
+                    subresult.Announcement = BuildReportAnnouncement(announcement);
+                }
+                if (allowResult)
+                {
+                    subresult.CurrentResult = BuildReportActualResult(actualResult, judge);
+                    subresult.FinalPoints = subresult.CurrentResult?.FinalPerformance?.Points;
+                }
                 entry.Subresults.Add(subresult);
 
                 entries.Add(entry);
@@ -141,6 +154,7 @@ namespace MilanWilczak.FreediveComp.Api
                     {
                         IsSortingSource = true,
                         PrimaryComponent = rules.PrimaryComponent.ToString(),
+                        HasSecondaryDuration = rules.HasDistance && rules.PrimaryComponent != PerformanceComponent.Duration,
                         HasFinalPoints = rules.HasPoints,
                         Title = discipline.ShortName,
                         Discipline = BuildReportDiscipline(discipline),
@@ -149,11 +163,12 @@ namespace MilanWilczak.FreediveComp.Api
             };
         }
 
-        public ResultsListReport GetReportResultsList(string raceId, string resultsListId)
+        public ResultsListReport GetReportResultsList(string raceId, string resultsListId, JudgePrincipal principal)
         {
             if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
             if (string.IsNullOrEmpty(resultsListId)) throw new ArgumentNullException("Missing ResultsListId");
             IRepositorySet repositorySet = repositorySetProvider.GetRepositorySet(raceId);
+            var isAuthenticated = principal != null;
 
             var resultsList = repositorySet.ResultsLists.FindResultsList(resultsListId);
             if (resultsList == null) throw new ArgumentOutOfRangeException("Wrong ResultsListId");
@@ -163,7 +178,7 @@ namespace MilanWilczak.FreediveComp.Api
             var sortingIndex = -1;
             foreach (var columnSource in resultsList.Columns)
             {
-                ResultsListColumn column = new ResultsListColumn(columnSource.Title, columnSource.IsFinal);
+                ResultsListColumn column = new ResultsListColumn(columnSource.Title, columnSource.IsFinal, isAuthenticated);
                 foreach (var component in columnSource.Components)
                 {
                     Discipline discipline;
@@ -319,14 +334,21 @@ namespace MilanWilczak.FreediveComp.Api
             private string title;
             private bool isSortingColumn;
             private bool isSingleDiscipline;
+            private bool hasSecondaryDuration;
             private bool hasFinalPoints;
+            private bool allowPrivateData;
+            private bool allowAnnouncements;
+            private bool allowResults;
             private PerformanceComponent primaryComponent;
             private List<ResultsListColumnComponent> components;
 
-            public ResultsListColumn(String title, bool isSortingColumn)
+            public ResultsListColumn(String title, bool isSortingColumn, bool allowPrivateData)
             {
                 this.title = title;
                 this.isSortingColumn = isSortingColumn;
+                this.allowPrivateData = allowPrivateData;
+                this.allowAnnouncements = true;
+                this.allowResults = true;
                 this.components = new List<ResultsListColumnComponent>();
             }
 
@@ -345,7 +367,8 @@ namespace MilanWilczak.FreediveComp.Api
                         IsSortingSource = IsSortingColumn,
                         Discipline = BuildReportDiscipline(Discipline),
                         HasFinalPoints = hasFinalPoints,
-                        PrimaryComponent = primaryComponent == PerformanceComponent.None ? null : primaryComponent.ToString()
+                        PrimaryComponent = primaryComponent == PerformanceComponent.None ? null : primaryComponent.ToString(),
+                        HasSecondaryDuration = hasSecondaryDuration
                     };
                 }
             }
@@ -359,8 +382,21 @@ namespace MilanWilczak.FreediveComp.Api
                 isSingleDiscipline = coeficient == 1.0f && this.components.Count == 1;
                 hasFinalPoints = components.All(c => c.Rules.HasPoints);    // all disciplines support points
                 primaryComponent = components.Select(c => c.Rules.PrimaryComponent).FirstOrDefault();
+                hasSecondaryDuration = components.Select(c => c.Rules.HasDuration && c.Rules.PrimaryComponent == PerformanceComponent.Duration).FirstOrDefault();
                 bool hasPerformance = components.Select(c => c.Rules.Name).Distinct().Count() == 1;  // all disciplines have same rules
-                if (!hasPerformance) primaryComponent = PerformanceComponent.None;
+                if (!hasPerformance)
+                {
+                    primaryComponent = PerformanceComponent.None;
+                    hasSecondaryDuration = false;
+                }
+                if (!discipline.AnnouncementsPublic)
+                {
+                    allowAnnouncements = allowPrivateData;
+                }
+                if (!discipline.ResultsPublic)
+                {
+                    allowResults = allowPrivateData;
+                }
             }
 
             public bool IsParticipating(Athlete athlete)
@@ -385,12 +421,17 @@ namespace MilanWilczak.FreediveComp.Api
                 var announcement = athlete.Announcements.FirstOrDefault(a => a.DisciplineId == disciplineId);
                 var actualResult = athlete.ActualResults.LastOrDefault(a => a.DisciplineId == disciplineId);
 
-                return new ResultsListReportEntrySubresult
+                var subresult = new ResultsListReportEntrySubresult();
+                if (allowAnnouncements)
                 {
-                    Announcement = BuildReportAnnouncement(announcement),
-                    CurrentResult = BuildReportActualResult(actualResult, null),
-                    FinalPoints = components[0].CalculateFinalPoints(actualResult)
-                };
+                    subresult.Announcement = BuildReportAnnouncement(announcement);
+                }
+                if (allowResults)
+                {
+                    subresult.CurrentResult = BuildReportActualResult(actualResult, null);
+                    subresult.FinalPoints = components[0].CalculateFinalPoints(actualResult);
+                }
+                return subresult;
             }
 
             private ResultsListReportEntrySubresult BuildCompositeSubresult(Athlete athlete)
@@ -423,14 +464,20 @@ namespace MilanWilczak.FreediveComp.Api
                     }
                 }
                 var subresult = new ResultsListReportEntrySubresult();
-                if (hasFinalPoints)
+                if (hasFinalPoints && allowResults)
                 {
                     subresult.FinalPoints = finalPoints;
                 }
                 if (primaryComponent != PerformanceComponent.None)
                 {
-                    subresult.Announcement = BuildReportAnnouncement(new Announcement { Performance = combinedAnnouncement });
-                    subresult.CurrentResult = BuildReportActualResult(combinedResult, null);
+                    if (allowAnnouncements)
+                    {
+                        subresult.Announcement = BuildReportAnnouncement(new Announcement { Performance = combinedAnnouncement });
+                    }
+                    if (allowResults)
+                    {
+                        subresult.CurrentResult = BuildReportActualResult(combinedResult, null);
+                    }
                 }
                 return subresult;
             }
@@ -471,6 +518,7 @@ namespace MilanWilczak.FreediveComp.Api
                 Discipline = discipline;
                 Coeficient = coeficient;
                 Rules = rules;
+
             }
 
             public double? CalculateFinalPoints(ActualResult result)

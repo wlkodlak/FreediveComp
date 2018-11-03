@@ -228,6 +228,8 @@ namespace MilanWilczak.FreediveComp.Models
         public string Category { get; set; }
         public bool AnnouncementsClosed { get; set; }
         public bool ResultsClosed { get; set; }
+        public bool AnnouncementsPublic { get; set; }
+        public bool ResultsPublic { get; set; }
     }
 
     public class RaceSettings

@@ -110,6 +110,7 @@ namespace MilanWilczak.FreediveComp.Api
         public string Title { get; set; }
         public bool IsSortingSource { get; set; }
         public string PrimaryComponent { get; set; }
+        public bool HasSecondaryDuration { get; set; }
         public bool HasFinalPoints { get; set; }
     }
 
@@ -184,6 +185,8 @@ namespace MilanWilczak.FreediveComp.Api
         public string Category { get; set; }
         public bool AnnouncementsClosed { get; set; }
         public bool ResultsClosed { get; set; }
+        public bool AnnouncementsPublic { get; set; }
+        public bool ResultsPublic { get; set; }
     }
 
     public sealed class AthleteDto
