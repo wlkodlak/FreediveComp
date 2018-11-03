@@ -1,27 +1,23 @@
 ﻿using FreediveComp.Launcher.Properties;
 using MilanWilczak.FreediveComp.Models;
 using System;
-using System.Diagnostics;
-using System.Text;
 using System.Windows.Forms;
 
 namespace FreediveComp.Launcher
 {
     public class ProcessIcon : IDisposable
     {
-        private IRacesIndexRepository racesRepository;
-        private string baseWebUri;
-        private readonly string adminToken;
+        private readonly IRacesIndexRepository racesRepository;
+        private readonly BrowserOpener browserOpener;
         private NotifyIcon notifyIcon;
         private ContextMenuStrip menu;
 
-        public ProcessIcon(IRacesIndexRepository racesRepository, string baseWebUri, string adminToken)
+        public ProcessIcon(IRacesIndexRepository racesRepository, BrowserOpener browserOpener)
         {
             this.racesRepository = racesRepository;
-            this.baseWebUri = baseWebUri;
-            this.adminToken = adminToken;
+            this.browserOpener = browserOpener;
             this.notifyIcon = new NotifyIcon();
-            this.notifyIcon.MouseDoubleClick += (sender, e) => OpenBrowser("");
+            this.notifyIcon.MouseDoubleClick += (sender, e) => browserOpener.OpenHomepage();
             this.menu = new ContextMenuStrip();
             this.menu.Opening += ContextMenuStrip_Opening;
         }
@@ -53,7 +49,7 @@ namespace FreediveComp.Launcher
         {
             var item = new ToolStripMenuItem();
             item.Text = name;
-            item.Click += (sender, e) => OpenBrowser(raceId + "/homepage");
+            item.Click += (sender, e) => browserOpener.OpenRace(raceId);
             menu.Items.Add(item);
         }
 
@@ -66,7 +62,7 @@ namespace FreediveComp.Launcher
         {
             var item = new ToolStripMenuItem();
             item.Text = "Create competition";
-            item.Click += (sender, e) => OpenBrowser(Guid.NewGuid().ToString() + "/create");
+            item.Click += (sender, e) => browserOpener.OpenNewRace();
             menu.Items.Add(item);
         }
 
@@ -76,18 +72,6 @@ namespace FreediveComp.Launcher
             item.Text = "Exit";
             item.Click += (sender, e) => Application.Exit();
             menu.Items.Add(item);
-        }
-
-        private void OpenBrowser(string relativePath)
-        {
-            var sb = new StringBuilder();
-            sb.Append(baseWebUri);
-            sb.Append(relativePath);
-            if (adminToken != null)
-            {
-                sb.Append("?token=").Append(adminToken);
-            }
-            Process.Start(sb.ToString());
         }
 
         public void Dispose()
