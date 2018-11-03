@@ -91,6 +91,13 @@ namespace MilanWilczak.FreediveComp.Controllers
             return apiAuthentication.Authorize(raceId, authorization);
         }
 
+        [Route("api-1.0/{raceId}/auth/unauthorize")]
+        [Authorize(Roles = "Admin")]
+        public JudgeDto PostAuthUnauthorize(string raceId, UnauthorizeRequestDto authorization)
+        {
+            return apiAuthentication.Unauthorize(raceId, authorization);
+        }
+
         [Route("api-1.0/{raceId}/auth/authenticate")]
         [AllowAnonymous]
         public AuthenticateResponseDto PostAuthAuthenticate(string raceId, AuthenticateRequestDto authentication)

@@ -9,6 +9,7 @@ namespace MilanWilczak.FreediveComp.Api
     public interface IApiAuthentication
     {
         JudgeDto Authorize(string raceId, AuthorizeRequestDto authorization);
+        JudgeDto Unauthorize(string raceId, UnauthorizeRequestDto authorization);
         AuthenticateResponseDto Authenticate(string raceId, AuthenticateRequestDto authentication);
         List<JudgeDto> GetJudges(string raceId);
         JudgeDto Verify(string raceId, JudgePrincipal principal);
@@ -100,6 +101,38 @@ namespace MilanWilczak.FreediveComp.Api
             judgesDevice.AuthenticationToken = AuthenticationToken.Generate(raceId, judge.JudgeId).ToString();
             judgesDevice.JudgeId = judge.JudgeId;
             judgesRepository.SaveJudgeDevice(judgesDevice);
+
+            JudgeDto judgeDto = new JudgeDto();
+            judgeDto.JudgeId = judge.JudgeId;
+            judgeDto.JudgeName = judge.Name;
+            judgeDto.IsAdmin = judge.IsAdmin;
+            judgeDto.DeviceIds = new List<string>();
+            foreach (var judgeDevice in judgesRepository.FindJudgesDevices(judge.JudgeId))
+            {
+                judgeDto.DeviceIds.Add(judgeDevice.DeviceId);
+            }
+            return judgeDto;
+        }
+
+        public JudgeDto Unauthorize(string raceId, UnauthorizeRequestDto authorization)
+        {
+            if (string.IsNullOrEmpty(raceId)) throw new ArgumentNullException("Missing RaceId");
+            if (string.IsNullOrEmpty(authorization.JudgeId)) throw new ArgumentNullException("Missing JudgeId");
+
+            var judgesRepository = repositorySetProvider.GetRepositorySet(raceId).Judges;
+            var judge = judgesRepository.FindJudge(authorization.JudgeId);
+            if (judge == null) throw new ArgumentOutOfRangeException("Unknown JudgeId");
+
+            foreach (var device in judgesRepository.FindJudgesDevices(judge.JudgeId))
+            {
+                var shouldRemove = string.IsNullOrEmpty(authorization.DeviceId) || authorization.DeviceId == device.DeviceId;
+                if (shouldRemove)
+                {
+                    device.AuthenticationToken = null;
+                    device.JudgeId = null;
+                    judgesRepository.SaveJudgeDevice(device);
+                }
+            }
 
             JudgeDto judgeDto = new JudgeDto();
             judgeDto.JudgeId = judge.JudgeId;

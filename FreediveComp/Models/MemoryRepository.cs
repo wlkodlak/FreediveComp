@@ -280,7 +280,10 @@ namespace MilanWilczak.FreediveComp.Models
                 devicesByCode.Clear();
                 foreach (JudgeDevice existing in devicesById.Values)
                 {
-                    authenticationMap[existing.AuthenticationToken] = existing.JudgeId;
+                    if (existing.AuthenticationToken != null)
+                    {
+                        authenticationMap[existing.AuthenticationToken] = existing.JudgeId;
+                    }
                     if (existing.ConnectCode != null)
                     {
                         devicesByCode[existing.ConnectCode] = existing;

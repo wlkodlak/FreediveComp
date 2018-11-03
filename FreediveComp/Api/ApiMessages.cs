@@ -234,6 +234,12 @@ namespace MilanWilczak.FreediveComp.Api
         public string JudgeName { get; set; }
     }
 
+    public sealed class UnauthorizeRequestDto
+    {
+        public string JudgeId { get; set; }
+        public string DeviceId { get; set; }
+    }
+
     public sealed class JudgeDto
     {
         public string JudgeId { get; set; }
