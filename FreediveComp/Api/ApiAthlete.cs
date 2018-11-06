@@ -32,15 +32,15 @@ namespace MilanWilczak.FreediveComp.Api
             var disciplines = repositorySet.Disciplines.GetDisciplines();
             var isAuthenticated = principal != null;
             var allowedAnnouncements = new HashSet<string>(disciplines.Where(d => d.AnnouncementsPublic || isAuthenticated).Select(d => d.DisciplineId));
-            var allowedResults = new HashSet<string>(disciplines.Where(d => d.ResultsPublic || isAuthenticated).Select(d => d.DisciplineId));
+            var publicResults = new HashSet<string>(disciplines.Where(d => d.ResultsPublic).Select(d => d.DisciplineId));
 
             var athletes = repositorySet.Athletes.GetAthletes();
 
-            return athletes.Select(athlete => new AthleteDto
+            return athletes.OrderBy(a => a.Surname).ThenBy(a => a.FirstName).Select(athlete => new AthleteDto
             {
                 Profile = BuildProfile(athlete),
                 Announcements = athlete.Announcements.Select(a => BuildAnnouncement(a, allowedAnnouncements.Contains(a.DisciplineId))).ToList(),
-                Results = athlete.ActualResults.Where(r => allowedResults.Contains(r.DisciplineId)).Select(BuildActualResult).ToList()
+                Results = GetVisibleResults(athlete.ActualResults, principal, publicResults).Select(BuildActualResult).ToList()
             }).ToList();
         }
 
@@ -53,7 +53,7 @@ namespace MilanWilczak.FreediveComp.Api
             var disciplines = repositorySet.Disciplines.GetDisciplines();
             var isAuthenticated = principal != null;
             var allowedAnnouncements = new HashSet<string>(disciplines.Where(d => d.AnnouncementsPublic || isAuthenticated).Select(d => d.DisciplineId));
-            var allowedResults = new HashSet<string>(disciplines.Where(d => d.ResultsPublic || isAuthenticated).Select(d => d.DisciplineId));
+            var publicResults = new HashSet<string>(disciplines.Where(d => d.ResultsPublic).Select(d => d.DisciplineId));
 
             var athlete = repositorySet.Athletes.FindAthlete(athleteId);
             if (athlete == null) throw new ArgumentOutOfRangeException("Unknown AthleteId " + athleteId);
@@ -62,9 +62,21 @@ namespace MilanWilczak.FreediveComp.Api
             {
                 Profile = BuildProfile(athlete),
                 Announcements = athlete.Announcements.Select(a => BuildAnnouncement(a, allowedAnnouncements.Contains(a.DisciplineId))).ToList(),
-                Results = athlete.ActualResults.Where(r => allowedResults.Contains(r.DisciplineId)).Select(BuildActualResult).ToList()
+                Results = GetVisibleResults(athlete.ActualResults, principal, publicResults).Select(BuildActualResult).ToList()
             };
             return athleteDto;
+        }
+
+        private static List<ActualResult> GetVisibleResults(List<ActualResult> allResults, JudgePrincipal principal, ICollection<string> publicDisciplines)
+        {
+            if (principal != null && principal.Judge.IsAdmin) return allResults;
+            var shownResults = new Dictionary<string, ActualResult>(allResults.Count);
+            foreach (var result in allResults)
+            {
+                if (principal == null && !publicDisciplines.Contains(result.DisciplineId)) continue;    // hidden from public eyes
+                shownResults[result.DisciplineId] = result;
+            }
+            return shownResults.Values.ToList();
         }
 
         private static AnnouncementDto BuildAnnouncement(Announcement model, bool includePerformance)
