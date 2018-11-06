@@ -258,7 +258,7 @@ namespace MilanWilczak.FreediveComp.Api
                 {
                     if (incomingPenalization.IsShortPerformance) continue;  // we will calculate this ourselves
 
-                    if (incomingPenalization.PenalizationId == null)        // custom penalization
+                    if (incomingPenalization.PenalizationId == null || incomingPenalization.PenalizationId == "Custom")        // custom penalization
                     {
                         VerifyResult(rules.HasDepth, false, incomingPenalization.Performance.Depth, "Penalization.Depth");
                         VerifyResult(rules.HasDuration, false, incomingPenalization.Performance.DurationSeconds(), "Penalization.Duration");
