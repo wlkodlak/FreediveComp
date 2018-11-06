@@ -124,6 +124,7 @@ namespace MilanWilczak.FreediveComp.Api
                 IsShortPerformance = penalization.IsShortPerformance,
                 RuleInput = penalization.RuleInput,
                 Performance = BuildPerformance(penalization.Performance),
+                CardResult = penalization.CardResult.ToString()
             };
         }
 
@@ -273,7 +274,7 @@ namespace MilanWilczak.FreediveComp.Api
                         if (finalPenalization != null)
                         {
                             finalResult.Penalizations.Add(finalPenalization);
-                            finalResult.CardResult = CombineCards(finalResult.CardResult, rulesPenalization.CardResult);
+                            finalResult.CardResult = CombineCards(finalResult.CardResult, finalPenalization.CardResult);
                         }
                     }
                 }
@@ -318,6 +319,7 @@ namespace MilanWilczak.FreediveComp.Api
                 Reason = dto.Reason,
                 RuleInput = dto.RuleInput,
                 ShortReason = dto.ShortReason,
+                CardResult = CardResult.Parse(dto.CardResult)
             };
         }
 

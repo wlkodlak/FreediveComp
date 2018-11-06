@@ -88,6 +88,7 @@ namespace MilanWilczak.FreediveComp.Api
         public bool IsShortPerformance { get; set; }
         public PerformanceDto Performance { get; set; }
         public double? RuleInput { get; set; }
+        public string CardResult { get; set; }
     }
 
     public sealed class ResultsListReport
@@ -283,6 +284,7 @@ namespace MilanWilczak.FreediveComp.Api
         public string InputUnit { get; set; }
         public string CardResult { get; set; }
         public CalculationDto Calculation { get; set; }
+        public double? MinimumFatalInput { get; set; }
     }
 
     public sealed class CalculationDto

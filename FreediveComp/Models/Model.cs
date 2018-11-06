@@ -135,6 +135,7 @@ namespace MilanWilczak.FreediveComp.Models
         public bool IsShortPerformance { get; set; }
         public Performance Performance { get; set; }
         public double? RuleInput { get; set; }
+        public CardResult CardResult { get; set; }
     }
 
     public struct CardResult

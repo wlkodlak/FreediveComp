@@ -102,6 +102,7 @@ namespace MilanWilczak.FreediveComp.Models
         bool HasInput { get; }
         string InputName { get; }
         string InputUnit { get; }
+        double? MinimumFatalInput { get; }
         CardResult CardResult { get; }
         Penalization BuildPenalization(double input, Performance result);
         ICalculation PenaltyCalculation { get; }
@@ -269,7 +270,8 @@ namespace MilanWilczak.FreediveComp.Models
                 ShortReason = "",
                 PenalizationId = "Short",
                 Reason = "Short performance",
-                Performance = new Performance()
+                Performance = new Performance(),
+                CardResult = CardResult.Yellow
             };
             var penalty = rules.ShortCalculation.Evaluate(new CalculationVariables(null, announced, realized));
             if (penalty != null) penalty = Math.Round(penalty.Value, 4);
@@ -423,9 +425,9 @@ namespace MilanWilczak.FreediveComp.Models
     public class AidaPenalization : IRulesPenalization
     {
         public static AidaPenalization EarlyStart = new AidaPenalization("EarlyStart", "Early start", "Early", "Time (seconds)", "s",
-            Calculation.Ceiling(Calculation.Multiply(Calculation.Constant(0.2), Calculation.Input)));
+            Calculation.Ceiling(Calculation.Multiply(Calculation.Constant(0.2), Calculation.Input)), null);
         public static AidaPenalization LateStart = new AidaPenalization("LateStart", "Late start", "Late", "Seconds after OT", "s",
-            Calculation.Ceiling(Calculation.Multiply(Calculation.Constant(0.2), Calculation.Minus(Calculation.Input, Calculation.Constant(10)))));
+            Calculation.Ceiling(Calculation.Multiply(Calculation.Constant(0.2), Calculation.Minus(Calculation.Input, Calculation.Constant(10)))), 30);
         public static AidaPenalization NoWall = new AidaPenalization("NoWall", "Wrong turn <1m", "Turn", "Count", "x", 5);
         public static AidaPenalization ExitHelp = new AidaPenalization("ExitHelp", "Push/pull on exit", "Exit", 5);
         public static AidaPenalization NoTag = new AidaPenalization("NoTag", "No tag delivered", "Tag", 1);
@@ -441,9 +443,10 @@ namespace MilanWilczak.FreediveComp.Models
         private string id, reason, shortReason, inputName, inputUnit;
         private ICalculation penaltyCalculation;
         private CardResult cardResult;
+        private double? fatalInput;
 
         public AidaPenalization(string id, string reason, string shortReason, double fixedPoints)
-            : this(id, reason, shortReason, null, null, Calculation.Constant(fixedPoints))
+            : this(id, reason, shortReason, null, null, Calculation.Constant(fixedPoints), null)
         {
         }
 
@@ -456,14 +459,15 @@ namespace MilanWilczak.FreediveComp.Models
             this.inputUnit = null;
             this.penaltyCalculation = null;
             this.cardResult = cardResult;
+            this.fatalInput = null;
         }
 
         public AidaPenalization(string id, string reason, string shortReason, string inputName, string inputUnit, double fixedPoints)
-            : this(id, reason, shortReason, inputName, inputUnit, Calculation.Multiply(Calculation.Constant(fixedPoints), Calculation.Input))
+            : this(id, reason, shortReason, inputName, inputUnit, Calculation.Multiply(Calculation.Constant(fixedPoints), Calculation.Input), null)
         {
         }
 
-        public AidaPenalization(string id, string reason, string shortReason, string inputName, string inputUnit, ICalculation penaltyCalculation)
+        public AidaPenalization(string id, string reason, string shortReason, string inputName, string inputUnit, ICalculation penaltyCalculation, double? fatalInput)
         {
             this.id = id;
             this.reason = reason;
@@ -472,6 +476,7 @@ namespace MilanWilczak.FreediveComp.Models
             this.inputUnit = inputUnit;
             this.penaltyCalculation = penaltyCalculation;
             this.cardResult = CardResult.Yellow;
+            this.fatalInput = fatalInput;
         }
 
         public string Id => id;
@@ -490,20 +495,28 @@ namespace MilanWilczak.FreediveComp.Models
 
         public ICalculation PenaltyCalculation => penaltyCalculation;
 
+        public double? MinimumFatalInput => fatalInput;
+
         public Penalization BuildPenalization(double input, Performance result)
         {
+            var hasInput = inputName != null;
             Penalization penalization = new Penalization
             {
                 PenalizationId = id,
                 Reason = reason,
                 ShortReason = shortReason,
-                RuleInput = inputName == null ? null : (double?)input,
-                Performance = new Performance()
+                RuleInput = inputName != null ? null : (double?)input,
+                Performance = new Performance(),
+                CardResult = cardResult
             };
 
             if (PenaltyCalculation != null)
             {
                 penalization.Performance.Points = penaltyCalculation.Evaluate(new CalculationVariables(input, null, result));
+            }
+            if (inputName != null && fatalInput != null && input >= fatalInput.Value)
+            {
+                penalization.CardResult = CardResult.Red;
             }
 
             return penalization;
@@ -748,6 +761,8 @@ namespace MilanWilczak.FreediveComp.Models
 
         public ICalculation PenaltyCalculation => calculation;
 
+        public double? MinimumFatalInput => null;
+
         public Penalization BuildPenalization(double input, Performance result)
         {
             Penalization penalization = new Penalization
@@ -757,7 +772,8 @@ namespace MilanWilczak.FreediveComp.Models
                 ShortReason = shortReason,
                 IsShortPerformance = false,
                 RuleInput = HasInput ? input : (double?)null,
-                Performance = new Performance()
+                Performance = new Performance(),
+                CardResult = cardResult
             };
             if (calculation != null)
             {

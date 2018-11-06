@@ -297,6 +297,7 @@ namespace MilanWilczak.FreediveComp.Api
                 IsShortPerformance = penalization.IsShortPerformance,
                 RuleInput = penalization.RuleInput,
                 Performance = BuildPerformance(penalization.Performance),
+                CardResult = penalization.CardResult.ToString(),
             };
         }
 

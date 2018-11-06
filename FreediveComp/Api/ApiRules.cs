@@ -55,7 +55,8 @@ namespace MilanWilczak.FreediveComp.Api
                 InputUnit = penalization.InputUnit,
                 Reason = penalization.Reason,
                 ShortReason = penalization.ShortReason,
-                Calculation = BuildCalculation(penalization.PenaltyCalculation)
+                Calculation = BuildCalculation(penalization.PenaltyCalculation),
+                MinimumFatalInput = penalization.MinimumFatalInput
             };
         }
 
@@ -157,6 +158,7 @@ namespace MilanWilczak.FreediveComp.Api
                 IsShortPerformance = penalization.IsShortPerformance,
                 RuleInput = penalization.RuleInput,
                 Performance = BuildPerformance(penalization.Performance),
+                CardResult = penalization.CardResult.ToString()
             };
         }
 
