@@ -505,7 +505,7 @@ namespace MilanWilczak.FreediveComp.Models
                 PenalizationId = id,
                 Reason = reason,
                 ShortReason = shortReason,
-                RuleInput = inputName != null ? null : (double?)input,
+                RuleInput = inputName == null ? null : (double?)input,
                 Performance = new Performance(),
                 CardResult = cardResult
             };

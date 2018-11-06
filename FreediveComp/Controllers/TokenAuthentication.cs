@@ -44,7 +44,7 @@ namespace MilanWilczak.FreediveComp.Controllers
             if (!headers.Contains("X-Authentication-Token")) return;
             var fullTokenString = headers.GetValues("X-Authentication-Token").FirstOrDefault();
             var token = AuthenticationToken.Parse(fullTokenString);
-            if (token == null || !token.Valid) context.ErrorResult = new UnauthorizedResult(new AuthenticationHeaderValue[0], context.Request);
+            if (token == null || !token.Valid) return;
 
             if (token.Equals(adminToken))
             {
@@ -61,10 +61,10 @@ namespace MilanWilczak.FreediveComp.Controllers
                 var repository = repositorySetProvider.GetRepositorySet(token.RaceId).Judges;
 
                 var judge = repository.FindJudge(token.JudgeId);
-                if (judge == null) context.ErrorResult = new UnauthorizedResult(new AuthenticationHeaderValue[0], context.Request);
+                if (judge == null) return;
 
                 var tokenVerified = repository.FindJudgesDevices(token.JudgeId).Any(d => d.AuthenticationToken == fullTokenString);
-                if (!tokenVerified) context.ErrorResult = new UnauthorizedResult(new AuthenticationHeaderValue[0], context.Request);
+                if (!tokenVerified) return;
 
                 context.Principal = new JudgePrincipal(judge);
             }
